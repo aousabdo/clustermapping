@@ -73,19 +73,31 @@ invisible(cat("\tProcessing data about available regions...\n"))
 regions    <- jsonlite::fromJSON(paste0(base_url,"/region"))
 regions.dt <- as.data.table(regions)
 
-# some of the regions are custom regions which I don't see us using 
-# anytime soon. Thus, I will be excluding these from the analysis
-# this will also help with the quereying, since the region_type_t 
-# is not a numeric
-regions.sub <- regions.dt[region_type_t != "custom"]
-regions.sub[, region_code_t := as.integer(region_code_t)]
-setkey(regions.sub, region_code_t)
+# some data transformations
+regions.dt[, region_type_t := factor(region_type_t)]
+regions.dt[, region_state_code_t := as.integer(region_state_code_t)]
 
 # one major issue we have with this dataset is the fact that the data frame produced has
 # columns that are lists. We need to convert those into their own columns
+# we will deal with each column separately since this is a tideous process
 
-# get names of columns that are lists
-list.cols <- regions.sub %>% select_if(is.list) %>% names()
+# the first column we will be dealing with is the state_codes_txt column
+# let's first split this list column
+regions.dt <- cSplit(indt = regions.dt, splitCols = "state_codes_txt", sep = ",", drop = FALSE)
 
-# use cSplit to split these on the comma, in new cols
-regions.sub <- cSplit(indt = regions.sub, splitCols = list.cols, sep = ",") 
+# now we need to build a function to clean the column names
+clean_col_names <- function(x){
+  gsub("\"|\\)|c|\\(", "", x)
+}
+
+# the process above gave us new columns that are mostly NAs
+# we need to modify these columns with the function above to get 
+# rid of the extra characters so we can convert the columns into 
+# integers
+cols_mod <- grep("state_codes_txt_", names(regions.dt), value = TRUE)
+
+regions.dt[, (cols_mod) := lapply(.SD, clean_col_names), .SDcols = cols_mod]
+regions.dt[, (cols_mod) := lapply(.SD, as.integer), .SDcols = cols_mod]
+
+# now get rid of the original state_codes_txt column
+regions.dt[, state_codes_txt := NULL]
