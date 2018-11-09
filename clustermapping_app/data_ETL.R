@@ -10,6 +10,7 @@ library(tesseract) # only to do OCR on the clustermapping.us api documentation m
 library(networkD3)
 library(visNetwork)
 library(igraph)
+library(stringr)
 
 ##############################################################################################
 ##############################################################################################
@@ -35,8 +36,8 @@ base_url <- "http://54.83.53.228/data"
 invisible(cat("\tProcessing meta data...\n"))
 
 # get a list of available years
-years <- jsonlite::fromJSON(paste0(base_url,"/meta/years"))
-years <- as.integer(years)
+years_avlbl <- jsonlite::fromJSON(paste0(base_url,"/meta/years"))
+years_avlbl <- as.integer(years_avlbl)
 
 # get a list of available region types
 region_types <- jsonlite::fromJSON(paste0(base_url,"/meta/regions"))
@@ -54,7 +55,7 @@ region_types[, variable := factor(variable)]
 meta_dict <- jsonlite::fromJSON(paste0(base_url,"/meta/dict"))
 
 # put meta data in one list and save it
-meta_data <- list(years = years, region_types = region_types, meta_dict = meta_dict)
+meta_data <- list(years_avlbl = years_avlbl, region_types = region_types, meta_dict = meta_dict)
 
 # save data to RDS file
 invisible(cat("\tSaving meta data...\n"))
@@ -70,12 +71,27 @@ saveRDS(object = meta_data, file = "./data/meta_data.Rds")
 invisible(cat("\tProcessing data about available regions...\n"))
 
 # get regions data
-regions    <- jsonlite::fromJSON(paste0(base_url,"/region"))
-regions.dt <- as.data.table(regions)
+# we will first get it as a list
+regions_lst    <- jsonlite::fromJSON(paste0(base_url,"/region"), simplifyVector = FALSE)
+
+# and now we'll get it as a data.frame
+regions_dt <- jsonlite::fromJSON(paste0(base_url,"/region"), simplifyVector = TRUE)
+regions_dt <- as.data.table(regions_dt)
+
+# the region data we get from the api has a region type that is custom
+# these regiosn don't interest us since they are custom regions made
+# by the site users. We nee to filter these out from the list and the data frame
+
+# filter the list
+regions_lst <- regions_lst[lapply(regions_lst, function(x) x[["region_type_t"]]) != "custom"]
+
+# now filter the data.table
+regions_dt <- regions_dt[region_type_t != "custom"]
 
 # some data transformations
-regions.dt[, region_type_t := factor(region_type_t)]
-regions.dt[, region_state_code_t := as.integer(region_state_code_t)]
+regions_dt[, region_type_t := factor(region_type_t)]
+regions_dt[, region_state_code_t := as.integer(region_state_code_t)]
+regions_dt[, region_code_t := as.integer(region_code_t)]
 
 # one major issue we have with this dataset is the fact that the data frame produced has
 # columns that are lists. We need to convert those into their own columns
@@ -83,21 +99,31 @@ regions.dt[, region_state_code_t := as.integer(region_state_code_t)]
 
 # the first column we will be dealing with is the state_codes_txt column
 # let's first split this list column
-regions.dt <- cSplit(indt = regions.dt, splitCols = "state_codes_txt", sep = ",", drop = FALSE)
+regions_dt <- cSplit(indt = regions_dt, splitCols = "state_codes_txt", sep = ",", drop = FALSE)
 
 # now we need to build a function to clean the column names
 clean_col_names <- function(x){
-  gsub("\"|\\)|c|\\(", "", x)
+  gsub("\"|\\)|c\\(|\\(", "", x)
 }
 
 # the process above gave us new columns that are mostly NAs
 # we need to modify these columns with the function above to get 
 # rid of the extra characters so we can convert the columns into 
 # integers
-cols_mod <- grep("state_codes_txt_", names(regions.dt), value = TRUE)
 
-regions.dt[, (cols_mod) := lapply(.SD, clean_col_names), .SDcols = cols_mod]
-regions.dt[, (cols_mod) := lapply(.SD, as.integer), .SDcols = cols_mod]
+# get a list of cols to modify
+cols_mod <- grep("state_codes_txt_", names(regions_dt), value = TRUE)
 
-# now get rid of the original state_codes_txt column
-regions.dt[, state_codes_txt := NULL]
+# modify columns
+regions_dt[, (cols_mod) := lapply(.SD, clean_col_names), .SDcols = cols_mod]
+regions_dt[, (cols_mod) := lapply(.SD, as.integer), .SDcols = cols_mod]
+
+# now we will do the same for the other list column which is regions_txt
+regions_dt <- cSplit(indt = regions_dt, splitCols = "regions_txt", sep = ",", drop = TRUE)
+
+# get a list of cols to modify
+cols_mod <- grep("regions_txt_", names(regions_dt), value = TRUE)
+
+# modify columns
+regions_dt[, (cols_mod) := lapply(.SD, clean_col_names), .SDcols = cols_mod]
+
