@@ -99,7 +99,7 @@ regions_dt[, region_code_t := as.integer(region_code_t)]
 
 # the first column we will be dealing with is the state_codes_txt column
 # let's first split this list column
-regions_dt <- cSplit(indt = regions_dt, splitCols = "state_codes_txt", sep = ",", drop = FALSE)
+regions_dt <- cSplit(indt = regions_dt, splitCols = "state_codes_txt", sep = ",", drop = TRUE)
 
 # now we need to build a function to clean the column names
 clean_col_names <- function(x){
@@ -127,3 +127,17 @@ cols_mod <- grep("regions_txt_", names(regions_dt), value = TRUE)
 # modify columns
 regions_dt[, (cols_mod) := lapply(.SD, clean_col_names), .SDcols = cols_mod]
 
+# after the transformations some columns are left with a "NULL" character entries
+# we need to fix these with the following function
+f_dowle3 = function(DT) {
+  if(!is.data.table(DT)) stop("\tObject supplied is not a data.table object...\n")
+  # this function converts all "NULL" entires in a data.table into NAs
+  for (j in seq_len(ncol(DT)))
+    set(x = DT
+        , i = which(DT[[j]] == "NULL")
+        , j = j
+        , value = NA)
+}
+
+
+f_dowle3(DT = regions_dt)
