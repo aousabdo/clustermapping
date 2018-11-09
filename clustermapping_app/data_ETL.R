@@ -27,6 +27,9 @@ library(stringr)
 ##############################################################################################
 ##############################################################################################
 
+# supress warnings
+options(warn = -1)
+
 # base url for clustermapping.us basic html API
 base_url <- "http://54.83.53.228/data"
 
@@ -68,11 +71,16 @@ saveRDS(object = meta_data, file = "./data/meta_data.Rds")
 #============================================================================================#
 #======================================== Regions ===========================================#
 #============================================================================================#
-invisible(cat("\tProcessing data about available regions...\n"))
+invisible(cat("\tProcessing regions data...\n"))
 
 # get regions data
 # we will first get it as a list
 regions_lst    <- jsonlite::fromJSON(paste0(base_url,"/region"), simplifyVector = FALSE)
+
+# this is an unnamed list. We will extract the ids an assign them as names
+# this will help us in parsing the list later on
+list_ids <- sapply(regions_lst, function(x) x$id)
+names(regions_lst) <- list_ids
 
 # and now we'll get it as a data.frame
 regions_dt <- jsonlite::fromJSON(paste0(base_url,"/region"), simplifyVector = TRUE)
@@ -139,5 +147,14 @@ f_dowle3 = function(DT) {
         , value = NA)
 }
 
-
+# apply function to our regions_dt data.table
 f_dowle3(DT = regions_dt)
+
+# put the reginos data in one list and save it
+regions_data <- list(regions_lst = regions_lst, regions_dt = regions_dt)
+
+# save data to RDS file
+invisible(cat("\tSaving regions data...\n"))
+saveRDS(object = regions_data, file = "./data/regions_data.Rds")
+
+options(warn = 0)
