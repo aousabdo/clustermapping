@@ -101,6 +101,11 @@ regions_dt[, region_type_t := factor(region_type_t)]
 regions_dt[, region_state_code_t := as.integer(region_state_code_t)]
 regions_dt[, region_code_t := as.integer(region_code_t)]
 
+# the character columns might have some extra spaces in them
+# we need to remove these out
+space_cols <- c("name_t", "region_short_name_t", "key_t")
+regions_dt[, (space_cols) := lapply(.SD, str_squish), .SDcols = space_cols]
+
 # one major issue we have with this dataset is the fact that the data frame produced has
 # columns that are lists. We need to convert those into their own columns
 # we will deal with each column separately since this is a tideous process
