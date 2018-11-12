@@ -102,6 +102,10 @@ regions_dt[, region_type_t := factor(region_type_t)]
 regions_dt[, region_state_code_t := as.integer(region_state_code_t)]
 regions_dt[, region_code_t := as.integer(region_code_t)]
 
+# For the three countries in the list, the region_short_name_t is NA, we need 
+# to correct that
+regions_dt[region_type_t == "country", region_short_name_t := name_t]
+
 # the character columns might have some extra spaces in them
 # we need to remove these out
 space_cols <- c("name_t", "region_short_name_t", "key_t")
