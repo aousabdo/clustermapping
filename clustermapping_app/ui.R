@@ -12,12 +12,16 @@ shinyUI(fluidPage(
     sidebarPanel( 
        selectInput(inputId = "region_name"
                    , label = "Select a Region"
-                   , choices = region_names)
+                   , choices = region_names), 
+       selectInput(inputId = "year"
+                   , label = "Select a Year"
+                   , choices = meta_data$years_avlbl
+                   , selected = max(meta_data$years_avlbl))
     ),
     
     # Show a plot of the generated distribution
     mainPanel(
-       plotOutput("distPlot")
+      shiny::dataTableOutput("text")
     )
   )
 ))
