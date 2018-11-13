@@ -45,14 +45,20 @@ shinyServer(function(input, output) {
     strong_clusters <- as.data.table(strong_clusters)
     
     strong_clusters[, cluster_code := as.integer(cluster_code)]
-    strong_clusters[, cluster_pos  := as.integer(cluster_pos)]
+    # the cluster position vector starts at 0, correct that since in R we start at 1
+    strong_clusters[, cluster_pos  := as.integer(cluster_pos) + 1] 
     strong_clusters[, cluster_name := factor(cluster_name)]
     strong_clusters[, cluster_key  := factor(cluster_key)]
     
     strong_clusters <- unique(strong_clusters)
     
     # set data.table key
-    setkey(strong_clusters, cluster_key)
+    setkey(strong_clusters, cluster_pos)
+    
+    # let's only return what we really care about
+    strong_clusters <- strong_clusters[, .(cluster_name, cluster_pos)]
+    setnames(strong_clusters, c("Cluster Name", "Cluster Rank"))
+    
     return(strong_clusters)
   })
   
