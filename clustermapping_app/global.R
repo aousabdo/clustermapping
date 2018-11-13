@@ -20,10 +20,14 @@ options(warn = -1)
 base_url <- "http://54.83.53.228/data"
 
 # load the data 
-meta_data    <- readRDS("./data/meta_data.Rds")
-regions_data <- readRDS("./data/regions_data.Rds")
+meta_data     <- readRDS("./data/meta_data.Rds")
+regions_data  <- readRDS("./data/regions_data.Rds")
+clusters_data <- readRDS("./data/cluster_data.Rds")
 
 regions_dt <- regions_data$regions_dt
 
 # get a list of regoins available, exclude the three countries, the us, mexico and canada
 region_names <- regions_dt[region_type_t != "country", unique(region_short_name_t)]
+
+clusters_list   <- clusters_data$clusters_list
+clusters_avlble <- clusters_data$clusters_avlble
