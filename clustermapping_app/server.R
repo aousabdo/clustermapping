@@ -5,7 +5,7 @@ source("./global.R")
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
   
-  output$text <- renderDataTable({
+  output$strong_clusters <- renderDataTable({
     
     # get region's name from input
     region_name <- input$region_name
@@ -14,7 +14,6 @@ shinyServer(function(input, output) {
     selected_region <- regions_dt[region_short_name_t == region_name
                                   , .(region_type_t, region_code_t, name_t, region_short_name_t)]
 
-  
     # in some cases, the region_code is between 1 and 9, in this case
     # if we call the api with this integer we'll get an error since the 
     # api expects a 01, 02, etc. so we need to fix this
@@ -26,6 +25,7 @@ shinyServer(function(input, output) {
                    , region_code, input$year, sep = "/")
     
     selected_region <- jsonlite::fromJSON(query)
+    if(length(selected_region) == 0) stop("\tSorry, the region selected has no data from the source...\n")
     
     # convert to data.table object
     selected_region <- as.data.table(selected_region)
@@ -41,10 +41,11 @@ shinyServer(function(input, output) {
     
     # bind strong-cluster data in one data.table object
     strong_clusters <- cbind(cluster_name, cluster_code, cluster_key, cluster_pos)
-    
     strong_clusters <- as.data.table(strong_clusters)
     
+    # some data transformations
     strong_clusters[, cluster_code := as.integer(cluster_code)]
+    
     # the cluster position vector starts at 0, correct that since in R we start at 1
     strong_clusters[, cluster_pos  := as.integer(cluster_pos) + 1] 
     strong_clusters[, cluster_name := factor(cluster_name)]

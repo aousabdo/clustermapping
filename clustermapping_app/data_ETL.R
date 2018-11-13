@@ -187,6 +187,7 @@ clusters_names <- sapply(clusters_list, function(x) x$name_t)
 clusters_key   <- sapply(clusters_list, function(x) x$key_t)
 
 # put available clusters data in a data.table
+# this is just a list of available clusters
 clusters_avlble <- data.table(clusters_ids, clusters_codes, clusters_key, clusters_names)
 
 # the clusters_list object we got from the API is not a named list. To make it useful, we need
@@ -194,6 +195,7 @@ clusters_avlble <- data.table(clusters_ids, clusters_codes, clusters_key, cluste
 # cluster keys as the names for the clusters
 names(clusters_list) <- clusters_avlble$clusters_key
 
+# put the data in one list and save it
 cluster_data <- list(clusters_list = clusters_list, clusters_avlble = clusters_avlble)
 
 # save data to RDS file
