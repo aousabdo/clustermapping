@@ -25,4 +25,5 @@ regions_data <- readRDS("./data/regions_data.Rds")
 
 regions_dt <- regions_data$regions_dt
 
-region_names <- regions_dt[, unique(region_short_name_t)]
+# get a list of regoins available, exclude the three countries, the us, mexico and canada
+region_names <- regions_dt[region_type_t != "country", unique(region_short_name_t)]
