@@ -21,7 +21,9 @@ shinyUI(fluidPage(
     
     # Show a plot of the generated distribution
     mainPanel(
-      shiny::dataTableOutput("strong_clusters")
+      h1('Strong Clusters in selected region'), hr(), 
+      DT::dataTableOutput("strong_clusters"),
+      verbatimTextOutput('y11')
     )
   )
 ))
