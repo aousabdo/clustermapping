@@ -168,3 +168,37 @@ invisible(cat("\tSaving regions data...\n"))
 saveRDS(object = regions_data, file = "./data/regions_data.Rds")
 
 options(warn = 0)
+#============================================================================================#
+#=================================== End: Regions Data ======================================#
+#============================================================================================#
+
+#============================================================================================#
+#======================================= Clusters ===========================================#
+#============================================================================================#
+invisible(cat("\tProcessing cluster data...\n"))
+invisible(cat("\tGetting a list of clusters and their subclusters, related clusters etc. \n"))
+
+# get a list of clusters and their subclusters, related clusters etc. 
+clusters_list  <- jsonlite::fromJSON(txt = paste0(base_url,"/meta/clusters"), simplifyVector = FALSE)
+
+clusters_ids   <- sapply(clusters_list, function(x) x$id)
+clusters_codes <- as.integer(sapply(clusters_list, function(x) x$cluster_code_t))
+clusters_names <- sapply(clusters_list, function(x) x$name_t)
+clusters_key   <- sapply(clusters_list, function(x) x$key_t)
+
+# put available clusters data in a data.table
+clusters_avlble <- data.table(clusters_ids, clusters_codes, clusters_key, clusters_names)
+
+# the clusters_list object we got from the API is not a named list. To make it useful, we need
+# to convert it into a named list. We have several options for the names but we'll use the 
+# cluster keys as the names for the clusters
+names(clusters_list) <- clusters_avlble$clusters_key
+
+cluster_data <- list(clusters_list = clusters_list, clusters_avlble = clusters_avlble)
+
+# save data to RDS file
+invisible(cat("\tSaving cluster data...\n"))
+saveRDS(object = cluster_data, file = "./data/cluster_data.Rds")
+#============================================================================================#
+#================================== End: Clusters Data ======================================#
+#============================================================================================#
