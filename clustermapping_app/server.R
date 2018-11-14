@@ -62,8 +62,11 @@ shinyServer(function(input, output) {
       return(strong_clusters)
   })
 
-  realted_and_sub_clusters <- reactive({
-    # we need to get the cluster selected by the user
+  cluster_data <- reactive({
+    # this function will query the cluster list and cluster data.table
+    # for cluster data given a selected cluster
+    
+    # get the cluster selected by the user
     selected_cluster <<- strong_clusters_dt()[input$strong_clusters_rows_selected]
     
     # now we query the cluster list data for the cluster selected by the user
@@ -76,8 +79,17 @@ shinyServer(function(input, output) {
     
     if(N_sub_clusters > 0){
       invisible(cat("\t This cluster has", N_sub_clusters, "subclusters\n"))
+      
       sub_clusters_dt <- selected_cluster_data$sub_clusters 
       sub_clusters_dt <- do.call(rbind, sub_clusters_dt) %>% as.data.table()
+      
+      # add the parent cluster name
+      sub_clusters_dt[, parent_cluster_name := selected_cluster[, cluster_name]]
+      
+      # rearrange column orders to have the parent cluster as the first column
+      setcolorder(sub_clusters_dt, c(2, 1))
+      setnames(sub_clusters_dt, c("parent_cluster_name", "sub_cluster_name"))
+      
     } else{
       invisible(cat("\t This cluster has no subclusters\n"))  
       sub_clusters_dt <- data.table()
@@ -117,7 +129,42 @@ shinyServer(function(input, output) {
       related_clusters_dt <- data.table()
     }
     
-    return(list(related_clusters_dt = related_clusters_dt, sub_clusters_dt = sub_clusters_dt))
+    # get a list of industries, naics, by year
+    industries_2012 <- selected_cluster_data$naics_2012 %>% 
+      list2df(col1 = "industry", col2 = "naics") %>%
+      as.data.table() %>% 
+      mutate(year = 2012)
+    
+    industries_2007 <- selected_cluster_data$naics_2007 %>% 
+      list2df(col1 = "industry", col2 = "naics") %>%
+      as.data.table() %>% 
+      mutate(year = 2007)
+    
+    industries_2002 <- selected_cluster_data$naics_2002 %>% 
+      list2df(col1 = "industry", col2 = "naics") %>%
+      as.data.table() %>% 
+      mutate(year = 2002)
+    
+    industries_1997 <- selected_cluster_data$naics_1997 %>% 
+      list2df(col1 = "industry", col2 = "naics") %>%
+      as.data.table() %>% 
+      mutate(year = 1997)
+    
+    # put them all in one table
+    industries <- do.call("rbind", list(industries_2012, industries_2007, industries_2002, industries_1997)) %>%
+      as.data.table()
+    
+    # add the parent cluster name
+    industries[, parent_cluster_name := selected_cluster[, cluster_name]]
+    
+    # rearrange columns
+    setcolorder(industries, c(ncol(industries), 1:(ncol(industries)-1)))
+    
+    # put it all in one list
+    cluster_data_list <- list(related_clusters_dt = related_clusters_dt
+                              , sub_clusters_dt = sub_clusters_dt
+                              , industries = industries)
+    return(cluster_data_list)
   })
   
   output$strong_clusters <- DT::renderDataTable(expr = {
@@ -125,5 +172,9 @@ shinyServer(function(input, output) {
     strong_clusters[, .(cluster_name)]
     }, server = FALSE, selection = 'single')
   
-  output$related_clusters <- DT::renderDataTable({realted_and_sub_clusters()$related_clusters_dt})
+  output$related_clusters <- shiny::renderDataTable({cluster_data()$related_clusters_dt})
+  
+  output$sub_clusters <- shiny::renderDataTable({cluster_data()$sub_clusters_dt})
+  
+  output$industries <- shiny::renderDataTable({cluster_data()$industries})
 })

@@ -23,7 +23,9 @@ shinyUI(fluidPage(
     mainPanel(
       h1('Strong Clusters in selected region'), hr(), 
       DT::dataTableOutput("strong_clusters"), 
-      DT::dataTableOutput("related_clusters")
+      shiny::dataTableOutput("related_clusters"),
+      shiny::dataTableOutput("sub_clusters"),
+      shiny::dataTableOutput("industries")
     )
   )
 ))
