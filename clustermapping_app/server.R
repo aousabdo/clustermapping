@@ -1,6 +1,8 @@
 library(shiny)
 library(DT)
 
+rm(list = ls())
+
 source("./global.R")
 
 # Define server logic required to draw a histogram
@@ -60,31 +62,68 @@ shinyServer(function(input, output) {
       return(strong_clusters)
   })
 
-  realted_clusters <- reactive({
+  realted_and_sub_clusters <- reactive({
+    # we need to get the cluster selected by the user
     selected_cluster <<- strong_clusters_dt()[input$strong_clusters_rows_selected]
     
-    selected_cluster_data <- clusters_list[[selected_cluster$clusters_key]] 
+    # now we query the cluster list data for the cluster selected by the user
+    selected_cluster_data <- clusters_list[[selected_cluster$cluster_key]] 
+    
+    # let's get the number of sub_clusters as well as the number of related_clusters
+    # to the selected cluster by the user
     N_sub_clusters <- selected_cluster_data$sub_clusters %>% length()
     N_rel_clusters <- selected_cluster_data$related_clusters %>% length()
     
     if(N_sub_clusters > 0){
       invisible(cat("\t This cluster has", N_sub_clusters, "subclusters\n"))
-    } else invisible(cat("\t This cluster has no subclusters\n"))  
+      sub_clusters_dt <- selected_cluster_data$sub_clusters 
+      sub_clusters_dt <- do.call(rbind, sub_clusters_dt) %>% as.data.table()
+    } else{
+      invisible(cat("\t This cluster has no subclusters\n"))  
+      sub_clusters_dt <- data.table()
+    }
     
     if(N_rel_clusters > 0){ 
       invisible(cat("\t This cluster has", N_rel_clusters, "related clusters\n"))
-    } else invisible(cat("\t This cluster has no related clusters\n"))  
+      
+      # let's get the data for the related clusters
+      related_clusters <- selected_cluster_data$related_clusters
+
+      # convert it to a data.table
+      do.call(rbind, related_clusters) %>% as.data.table() -> related_clusters_dt
+      
+      # do some data cleaning etc. 
+      # list of numerical columns
+      numeric_cols <- c("cluster_code_t", grep("related", names(related_clusters_dt), v = TRUE))
+      
+      # convert all columns from lists to characters
+      related_clusters_dt[, names(related_clusters_dt) := lapply(.SD, as.character)]
+      
+      # convert the only character column to factor
+      related_clusters_dt[, cluster_name_t := factor(cluster_name_t)]
+      
+      # now convert all numerical cols to numeric
+      related_clusters_dt[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
+      
+      # add the parent cluster name
+      related_clusters_dt[, parent_cluster_name := selected_cluster[, cluster_name]]
+      
+      # rearrange column orders to have the parent cluster as the first column
+      setcolorder(related_clusters_dt, c(ncol(related_clusters_dt), 2, 1, 3:(ncol(related_clusters_dt)-1)))
+      
+      related_clusters_dt <<- related_clusters_dt[, .(parent_cluster_name, cluster_name_t, related_percentage)]
+    } else{
+      invisible(cat("\t This cluster has no related clusters\n"))
+      related_clusters_dt <- data.table()
+    }
     
-    
+    return(list(related_clusters_dt = related_clusters_dt, sub_clusters_dt = sub_clusters_dt))
   })
   
   output$strong_clusters <- DT::renderDataTable(expr = {
-    strong_clusters <<- strong_clusters_dt()
+    strong_clusters <- strong_clusters_dt()
     strong_clusters[, .(cluster_name)]
     }, server = FALSE, selection = 'single')
   
-  output$y11 = renderPrint(realted_clusters())
-  
-
-  
+  output$related_clusters <- DT::renderDataTable({realted_and_sub_clusters()$related_clusters_dt})
 })
