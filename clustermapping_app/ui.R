@@ -25,7 +25,10 @@ shinyUI(fluidPage(
       DT::dataTableOutput("strong_clusters"), 
       shiny::dataTableOutput("related_clusters"),
       shiny::dataTableOutput("sub_clusters"),
-      shiny::dataTableOutput("industries")
+      shiny::dataTableOutput("industries"),
+      forceNetworkOutput("forceNetwork_Viz"),
+      sankeyNetworkOutput("sankeyNetwork_Viz"),
+      visNetworkOutput("vizNetwork_basic")
     )
   )
 ))

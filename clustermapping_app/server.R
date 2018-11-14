@@ -167,6 +167,79 @@ shinyServer(function(input, output) {
     return(cluster_data_list)
   })
   
+  network_viz <- reactive({
+    # this function creates several network visulaizations
+    # let's make some pretty plots. These will be network and sankey diagrams
+    # to create these we need to create nodes and edges as follows
+    
+    # the data we will be using to create these plots is the cluster_data()$related_clusters_dt
+    related_clusters <<- cluster_data()$related_clusters_dt
+    
+    # create nodes: nodes should simply be the cluster names we have 
+    nodes <- c(as.character(related_clusters[1 , parent_cluster_name])
+               , as.character(related_clusters$cluster_name_t)) 
+    nodes <- data.table(cluster_name = nodes) 
+    
+    # add id column, we'll use this column in our directional plots
+    nodes[, id := 1:.N]
+    
+    # since the function we are using requires the links and nodes to start at 0 we have to 
+    # make sure we do that
+    nodes_d3 <- mutate(nodes, id = id - 1)
+    
+    # make sure we scale the weight of the edges to reflect the strength of the relationship
+    scale_fun <- function(x = NULL){round(x/min(x), 1)}
+    
+    edges <- data.table(from = 1
+                        , to = nodes_d3$id
+                        , weight = c(0, scale_fun(related_clusters$related_avg)))
+    
+    # since the function we are using requires the links and nodes to start at 0 we have to 
+    # make sure we do that
+    edges_d3 <- mutate(edges, from = from - 1) %>% as.data.table()
+    
+    # remove the first row which is the parent cluster with itself
+    edges_d3 <- edges_d3[2:.N]
+    
+    # make network graph
+    forceNetwork_viz <- forceNetwork(
+      Links = edges_d3, Nodes = nodes_d3,  
+      Source = "from", Target = "to",      # so the network is directed.
+      NodeID = "cluster_name", Group = "id", Value = "weight", 
+      opacity = 1, fontSize = 8, zoom = TRUE, opacityNoHover = T, legend = F
+    )
+    
+    # create a sankey network diagram
+    sankeyNetwork_viz <- sankeyNetwork(
+      Links = edges_d3, Nodes = nodes_d3,
+      Source = "from", Target = "to",
+      NodeID = "cluster_name", Value = "weight",
+      fontSize = 16)
+
+    # let's make some network graphs with the vizNetwork library
+    # to use the visNetwork package we need to have columns with specifict names
+    nodes_d3$label <- nodes_d3$cluster_name
+    edges_d3 <- mutate(edges_d3, width = weight)
+
+    # make some network graphs
+    vizNetwork_basic <- visNetwork(nodes_d3, edges_d3) %>%
+      visLayout(randomSeed = 12)
+
+    visNetwork(nodes_d3, edges_d3) %>%
+      # visEdges(arrows = "middle") %>%
+      visNodes(color = list(background = "lightblue",
+                            border = "darkblue",
+                            highlight = "yellow"),
+               shadow = list(enabled = TRUE, size = 10)) %>%
+      visLayout(randomSeed = 1234)
+
+    
+    return(list(forceNetwork_viz = forceNetwork_viz, sankeyNetwork_viz = sankeyNetwork_viz, vizNetwork_basic = vizNetwork_basic))
+  })
+  output$vizNetwork_basic <- renderVisNetwork({network_viz()$vizNetwork_basic})  
+  output$forceNetwork_Viz <- renderForceNetwork({network_viz()$forceNetwork_viz})
+  output$sankeyNetwork_Viz <- renderSankeyNetwork({network_viz()$sankeyNetwork_viz})
+  
   output$strong_clusters <- DT::renderDataTable(expr = {
     strong_clusters <- strong_clusters_dt()
     strong_clusters[, .(cluster_name)]
