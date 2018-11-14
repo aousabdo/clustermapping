@@ -173,7 +173,7 @@ shinyServer(function(input, output) {
     # to create these we need to create nodes and edges as follows
     
     # the data we will be using to create these plots is the cluster_data()$related_clusters_dt
-    related_clusters <<- cluster_data()$related_clusters_dt
+    related_clusters <- cluster_data()$related_clusters_dt
     
     # create nodes: nodes should simply be the cluster names we have 
     nodes <- c(as.character(related_clusters[1 , parent_cluster_name])
@@ -225,18 +225,14 @@ shinyServer(function(input, output) {
     vizNetwork_basic <- visNetwork(nodes_d3, edges_d3) %>%
       visLayout(randomSeed = 12)
 
-    visNetwork(nodes_d3, edges_d3) %>%
-      # visEdges(arrows = "middle") %>%
-      visNodes(color = list(background = "lightblue",
-                            border = "darkblue",
-                            highlight = "yellow"),
-               shadow = list(enabled = TRUE, size = 10)) %>%
-      visLayout(randomSeed = 1234)
-
+    viz_list <- list(forceNetwork_viz = forceNetwork_viz
+                     , sankeyNetwork_viz = sankeyNetwork_viz
+                     , vizNetwork_basic = vizNetwork_basic) 
     
-    return(list(forceNetwork_viz = forceNetwork_viz, sankeyNetwork_viz = sankeyNetwork_viz, vizNetwork_basic = vizNetwork_basic))
+    return(viz_list)
   })
-  output$vizNetwork_basic <- renderVisNetwork({network_viz()$vizNetwork_basic})  
+  
+  output$vizNetwork_basic <- renderVisNetwork({network_viz()$vizNetwork_basic}) 
   output$forceNetwork_Viz <- renderForceNetwork({network_viz()$forceNetwork_viz})
   output$sankeyNetwork_Viz <- renderSankeyNetwork({network_viz()$sankeyNetwork_viz})
   
