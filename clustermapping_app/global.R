@@ -35,7 +35,6 @@ clusters_avlble <- clusters_data$clusters_avlble
 #========================================================================================#
 #=================================== get_strong_clusters ================================#
 #========================================================================================#
-
 get_strong_clusters <- function(region_name = NULL
                                 , regions_dt = NULL
                                 , year_selected = 2016
@@ -122,8 +121,9 @@ get_cluster_data <- function(strong_clusters_dt = NULL
   N_sub_clusters <- selected_cluster_data$sub_clusters %>% length()
   N_rel_clusters <- selected_cluster_data$related_clusters %>% length()
   
+  selected_cluster_name <- selected_cluster[, cluster_name] %>% as.character()
   if(N_sub_clusters > 0){
-    invisible(cat("\t This cluster has", N_sub_clusters, "subclusters\n"))
+    invisible(cat("\tThe cluster", selected_cluster_name, "has", N_sub_clusters, "subclusters\n"))
     
     sub_clusters_dt <- selected_cluster_data$sub_clusters 
     sub_clusters_dt <- do.call(rbind, sub_clusters_dt) %>% as.data.table()
@@ -136,12 +136,12 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     setnames(sub_clusters_dt, c("parent_cluster_name", "sub_cluster_name"))
     
   } else{
-    invisible(cat("\t This cluster has no subclusters\n"))  
+    invisible(cat("\tThe cluster", selected_cluster_name, "has no subclusters\n"))  
     sub_clusters_dt <- data.table()
   }
   
   if(N_rel_clusters > 0){ 
-    invisible(cat("\t This cluster has", N_rel_clusters, "related clusters\n"))
+    invisible(cat("\tThe cluster", selected_cluster_name, "has", N_rel_clusters, "related clusters\n"))
     
     # let's get the data for the related clusters
     related_clusters <- selected_cluster_data$related_clusters
@@ -170,7 +170,7 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     
     related_clusters_dt <<- related_clusters_dt[, .(parent_cluster_name, cluster_name_t, related_percentage)]
   } else{
-    invisible(cat("\t This cluster has no related clusters\n"))
+    invisible(cat("\tThe cluster", selected_cluster_name, "has no related clusters\n"))
     related_clusters_dt <- data.table()
   }
   
