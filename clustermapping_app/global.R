@@ -88,7 +88,7 @@ get_strong_clusters <- function(region_name = NULL
   
   # the cluster position vector starts at 0, correct that since in R we start at 1
   strong_clusters[, cluster_pos  := as.integer(cluster_pos) + 1] 
-  strong_clusters[, cluster_name := factor(cluster_name)]
+  # strong_clusters[, cluster_name := factor(cluster_name)]
   strong_clusters[, cluster_key  := factor(cluster_key)]
   
   strong_clusters <- unique(strong_clusters)
@@ -157,7 +157,7 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     related_clusters_dt[, names(related_clusters_dt) := lapply(.SD, as.character)]
     
     # convert the only character column to factor
-    related_clusters_dt[, cluster_name_t := factor(cluster_name_t)]
+    # related_clusters_dt[, cluster_name_t := factor(cluster_name_t)]
     
     # now convert all numerical cols to numeric
     related_clusters_dt[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
