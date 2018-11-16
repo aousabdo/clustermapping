@@ -314,7 +314,8 @@ get_region_clusters <- function(cluster = NULL
   # return cluster-level data including by range of years
 
   # function arguments
-  # cluster: a valid cluster code, 6 for example
+  # cluster: a valid cluster code, 6 for example, 
+  #          a valid cluster key such as distribution_and_electronic_commerce
   #          "traded" for traded clusters
   #          "local" for local clusters
   #          "all" for all clusters
@@ -340,9 +341,17 @@ get_region_clusters <- function(cluster = NULL
 
   # we need the meta_data list to do some checks, so make sure we have that object
   if(is.null(meta_data_list)) stop("\tYou must supply a valid meta_data_list object...\n")
-
+  
   # now check the cluster selected
-
+  if(is.null(cluster)){
+    stop("\tYou must provide a valid cluster name or a cluster key or just select \"all\" for all clusters, \"traded\" for traded clusters, or \"local\" for local clusters\n")
+  }else if(is.numeric(cluster)){ 
+    if(!(cluster %in% meta_data_list$clusters_avlbl$clusters_codes)) stop("\tcluster selected doesn't exist...\n")
+  }else if(is.character(cluster)){
+    clusters_names_avlbl <- meta_data_list$clusters_avlbl$clusters_names
+    clusters_names_avlbl <- c(clusters_names_avlbl, "traded", "local", "all")
+    if(sum(cluster == clusters_names_avlbl) == 0) stop("\tcluster selected doesn't exist...\n")
+  }
 
   # check the regions_dt data.table
   if(is.null(regions_dt)) stop("\tPlease supply a region_dt data.table...\n")
