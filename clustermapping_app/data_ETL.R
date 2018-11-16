@@ -55,11 +55,22 @@ setnames(region_types, c("value", "variable"))
 # convert character column containing levels to factor
 region_types[, variable := factor(variable)]
 
+# not all regions types are available for querying, please 
+# look at manual available: http://clustermapping.us/sites/default/files/files/page/ClusterMapping-API-Docs.pdf
+# according to the manual the only available region types are:
+region_types_avlbl <- c("country", "state", "economic", "msa", "county")
+
+# subset the region_types data.table to only include the available regions and save it to a new object
+region_types_avlbl <- region_types[variable %in% region_types_avlbl]
+
 # get the meta data dictionary
 meta_dict <- jsonlite::fromJSON(paste0(base_url,"/meta/dict"))
 
 # put meta data in one list and save it
-meta_data <- list(years_avlbl = years_avlbl, region_types = region_types, meta_dict = meta_dict)
+meta_data <- list(years_avlbl = years_avlbl
+                  , region_types = region_types
+                  , region_types_avlbl = region_types_avlbl
+                  , meta_dict = meta_dict)
 
 # save data to RDS file
 invisible(cat("\tSaving meta data...\n"))
