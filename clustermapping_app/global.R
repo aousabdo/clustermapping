@@ -38,7 +38,8 @@ clusters_avlble <- clusters_data$clusters_avlble
 get_strong_clusters <- function(region_name = NULL
                                 , regions_dt = NULL
                                 , year_selected = 2016
-                                , meta_data = NULL){
+                                , meta_data = NULL
+                                , base_url = "http://54.83.53.228/data"){
   # given a region name, a regions_dt, and a year, this function will return a 
   # data.table object with the strong clusters for that region
 
@@ -296,4 +297,43 @@ scale_fun <- function(x = NULL){
   }
 #========================================================================================#
 #==================================== End: scale_fun ====================================#
+#========================================================================================#
+
+#========================================================================================#
+#=================================== get_region_clusters ================================#
+#========================================================================================#
+get_region_clusters <- function(region_name = NULL
+                                , regions_dt = NULL
+                                , year_selected = 2016
+                                , cluster_selected = "all"
+                                , meta_data = NULL
+                                , base_url = "http://54.83.53.228/data"){
+  # return cluster-level data including by range of years 
+  
+  # region_name: valid name for a region, this can also be "all" to retrieve data for all regions
+  # regions_dt: a valid data.table regions object. This data.table is produced with the 
+  #             data_ETL.R code
+  # year_selected: a valid year in the form YYYY. Valid values can be found in the 
+  #                meta_data list which is produced by the data_ETL.R code. 
+  #           Valid values:
+  #                "all":      to retrieve all years
+  #                "earliest": to retrieve data for the earliest year
+  #                "latest"  : to retrieve data for the latest year
+  #                YYYY: an integer representing a valid year, currently 1998 to 2016
+  #                YYYY,YYYY,YYYY: year range, example: 2009,2010,2011,2012
+  
+  if(regions_dt[region_short_name_t == region_name, .N] == 0) stop("\tRegion selected is not valid...\n")
+  
+  # filter the regions data.table for the selected region
+  selected_region <- regions_dt[region_short_name_t == region_name
+                                , .(region_type_t, region_code_t, name_t, region_short_name_t)]
+  
+  # in some cases, the region_code is between 1 and 9, in this case
+  # if we call the api with this integer we'll get an error since the 
+  # api expects a 01, 02, etc. so we need to fix this
+  region_code <- selected_region[, region_code_t]
+  if(nchar(region_code) == 1) region_code = paste0("0", region_code)
+}
+#========================================================================================#
+#================================ End: get_region_clusters ==============================#
 #========================================================================================#
