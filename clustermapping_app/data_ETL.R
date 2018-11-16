@@ -35,52 +35,6 @@ options(warn = -1)
 base_url <- "http://54.83.53.228/data"
 
 #============================================================================================#
-#======================================= Meta Data ==========================================#
-#============================================================================================#
-invisible(cat("\tProcessing meta data...\n"))
-
-# get a list of available years
-years_avlbl <- jsonlite::fromJSON(paste0(base_url,"/meta/years"))
-years_avlbl <- as.integer(years_avlbl)
-
-# get a list of available region types
-region_types <- jsonlite::fromJSON(paste0(base_url,"/meta/regions"))
-
-# convert to data.table object
-region_types <- as.data.table(melt(region_types))
-
-# set names
-setnames(region_types, c("value", "variable"))
-
-# convert character column containing levels to factor
-region_types[, variable := factor(variable)]
-
-# not all regions types are available for querying, please 
-# look at manual available: http://clustermapping.us/sites/default/files/files/page/ClusterMapping-API-Docs.pdf
-# according to the manual the only available region types are:
-region_types_avlbl <- c("country", "state", "economic", "msa", "county")
-
-# subset the region_types data.table to only include the available regions and save it to a new object
-region_types_avlbl <- region_types[variable %in% region_types_avlbl]
-
-# get the meta data dictionary
-meta_dict <- jsonlite::fromJSON(paste0(base_url,"/meta/dict"))
-
-# put meta data in one list and save it
-meta_data <- list(years_avlbl = years_avlbl
-                  , region_types = region_types
-                  , region_types_avlbl = region_types_avlbl
-                  , meta_dict = meta_dict)
-
-# save data to RDS file
-invisible(cat("\tSaving meta data...\n"))
-saveRDS(object = meta_data, file = "./data/meta_data.Rds")
-
-#============================================================================================#
-#==================================== End: Meta Data ========================================#
-#============================================================================================#
-
-#============================================================================================#
 #======================================== Regions ===========================================#
 #============================================================================================#
 invisible(cat("\tProcessing regions data...\n"))
@@ -199,19 +153,66 @@ clusters_key   <- sapply(clusters_list, function(x) x$key_t)
 
 # put available clusters data in a data.table
 # this is just a list of available clusters
-clusters_avlble <- data.table(clusters_ids, clusters_codes, clusters_key, clusters_names)
+clusters_avlbl <- data.table(clusters_ids, clusters_codes, clusters_key, clusters_names)
 
 # the clusters_list object we got from the API is not a named list. To make it useful, we need
 # to convert it into a named list. We have several options for the names but we'll use the 
 # cluster keys as the names for the clusters
-names(clusters_list) <- clusters_avlble$clusters_key
+names(clusters_list) <- clusters_avlbl$clusters_key
 
 # put the data in one list and save it
-cluster_data <- list(clusters_list = clusters_list, clusters_avlble = clusters_avlble)
+cluster_data <- list(clusters_list = clusters_list, clusters_avlbl = clusters_avlbl)
 
 # save data to RDS file
 invisible(cat("\tSaving cluster data...\n"))
 saveRDS(object = cluster_data, file = "./data/cluster_data.Rds")
 #============================================================================================#
 #================================== End: Clusters Data ======================================#
+#============================================================================================#
+
+#============================================================================================#
+#======================================= Meta Data ==========================================#
+#============================================================================================#
+invisible(cat("\tProcessing meta data...\n"))
+
+# get a list of available years
+years_avlbl <- jsonlite::fromJSON(paste0(base_url,"/meta/years"))
+years_avlbl <- as.integer(years_avlbl)
+
+# get a list of available region types
+region_types <- jsonlite::fromJSON(paste0(base_url,"/meta/regions"))
+
+# convert to data.table object
+region_types <- as.data.table(melt(region_types))
+
+# set names
+setnames(region_types, c("value", "variable"))
+
+# convert character column containing levels to factor
+region_types[, variable := factor(variable)]
+
+# not all regions types are available for querying, please 
+# look at manual available: http://clustermapping.us/sites/default/files/files/page/ClusterMapping-API-Docs.pdf
+# according to the manual the only available region types are:
+region_types_avlbl <- c("country", "state", "economic", "msa", "county")
+
+# subset the region_types data.table to only include the available regions and save it to a new object
+region_types_avlbl <- region_types[variable %in% region_types_avlbl]
+
+# get the meta data dictionary
+meta_dict <- jsonlite::fromJSON(paste0(base_url,"/meta/dict"))
+
+# put meta data in one list and save it
+# we will also add the clusters_avlbl to the meta_data
+meta_data <- list(years_avlbl = years_avlbl
+                  , region_types = region_types
+                  , region_types_avlbl = region_types_avlbl
+                  , meta_dict = meta_dict
+                  , clusters_avlbl = clusters_avlbl)
+
+# save data to RDS file
+invisible(cat("\tSaving meta data...\n"))
+saveRDS(object = meta_data, file = "./data/meta_data.Rds")
+#============================================================================================#
+#==================================== End: Meta Data ========================================#
 #============================================================================================#

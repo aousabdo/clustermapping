@@ -30,7 +30,7 @@ regions_dt <- regions_data$regions_dt
 region_names <- regions_dt[region_type_t != "country", unique(region_short_name_t)]
 
 clusters_list   <- clusters_data$clusters_list
-clusters_avlble <- clusters_data$clusters_avlble
+clusters_avlbl <- clusters_data$clusters_avlbl
 
 #========================================================================================#
 #=================================== get_strong_clusters ================================#
@@ -310,57 +310,59 @@ get_region_clusters <- function(cluster = NULL
                                 , cluster_selected = "all"
                                 , meta_data_list = meta_data
                                 , base_url = "http://54.83.53.228/data"){
-  
-  # return cluster-level data including by range of years 
-  
+
+  # return cluster-level data including by range of years
+
   # function arguments
-  # cluster: a valid cluster ID, clusterData/6 for example
-  #          a valid cluster code, 6 for example
+  # cluster: a valid cluster code, 6 for example
   #          "traded" for traded clusters
   #          "local" for local clusters
   #          "all" for all clusters
-  # region_name: valid name for a region, this can also be "all" to retrieve data for all 
+  # region_name: valid name for a region, this can also be "all" to retrieve data for all
   # regions given a valid region type
   # region_type: a valid region type. valid region types are listed in the meta_data$region_types_avlbl
-  # regions_dt: a valid data.table regions object. This data.table is produced with the 
+  # regions_dt: a valid data.table regions object. This data.table is produced with the
   #             data_ETL.R code
-  # year_selected: a valid year in the form YYYY. Valid values can be found in the 
-  #                meta_data list which is produced by the data_ETL.R code. 
+  # year_selected: a valid year in the form YYYY. Valid values can be found in the
+  #                meta_data list which is produced by the data_ETL.R code.
   #           Valid values:
   #                "all":      to retrieve all years
   #                "earliest": to retrieve data for the earliest year
   #                "latest"  : to retrieve data for the latest year
   #                YYYY: an integer representing a valid year, currently 1998 to 2016
   #                YYYY,YYYY,YYYY: year range, example: 2009,2010,2011,2012
-  # Example: to return data available for the Apparel cluster in Wisconsin across all years 
+  # Example: to return data available for the Apparel cluster in Wisconsin across all years
   #          /data/cluster/3/all/state/55
   # Example: to return data available for the Apparel cluster across all states from 2009:2011
   #          /data/cluster/3/2009,2010,2011/state/all
-  
+
   # checks
-  
+
   # we need the meta_data list to do some checks, so make sure we have that object
   if(is.null(meta_data_list)) stop("\tYou must supply a valid meta_data_list object...\n")
-  
+
+  # now check the cluster selected
+
+
   # check the regions_dt data.table
   if(is.null(regions_dt)) stop("\tPlease supply a region_dt data.table...\n")
   if(!is.data.table(regions_dt)) stop("\tregions_dt must be a data.table object...\n")
-  
+
   # make sure the regions_name is valid
   if(regions_dt[region_short_name_t == region_name, .N] == 0) stop("\tRegion selected is not valid...\n")
-  
+
   # make sure the region_type is valid
   if(!is.null(region_type)){
     if(!(region_type %in% meta_data[["region_types_avlbl"]])) stop("\tRegion type selected is not vaild...\n")
   }else{region_type <- regions_dt[region_short_name_t == region_name, region_type_t]}
-  
-  
+
+
   # filter the regions data.table for the selected region
   selected_region <- regions_dt[region_short_name_t == region_name
                                 , .(region_type_t, region_code_t, name_t, region_short_name_t)]
-  
+
   # in some cases, the region_code is between 1 and 9, in this case
-  # if we call the api with this integer we'll get an error since the 
+  # if we call the api with this integer we'll get an error since the
   # api expects a 01, 02, etc. so we need to fix this
   region_code <- selected_region[, region_code_t]
   if(nchar(region_code) == 1) region_code = paste0("0", region_code)
