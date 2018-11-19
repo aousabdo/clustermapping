@@ -367,7 +367,11 @@ get_region_clusters <- function(cluster = NULL
   # to get the info about the region
   if(region_name == "all"){
     print(region_type)
-    if(!(region_type %in% meta_data_list[["region_types_avlbl"]][, variable])) stop("\tRegion type selected is not vaild...\n")
+    if(is.null(region_type)){
+      stop("\tYou must supply a region type...\n")
+    } else if(!(region_type %in% meta_data_list[["region_types_avlbl"]][, variable])){
+      stop("\tRegion type selected is not vaild...\n")
+    }
   }else{
     # check the regions_dt data.table
     if(is.null(regions_dt)) stop("\tPlease supply a region_dt data.table...\n")
@@ -394,16 +398,23 @@ get_region_clusters <- function(cluster = NULL
   #------------------------------ End: perform args checks -----------------------------#
   #-------------------------------------------------------------------------------------#
   
-  # filter the regions data.table for the selected region
-  selected_region <<- regions_dt[region_short_name_t == region_name
-                                , .(region_type_t, region_code_t, name_t, region_short_name_t)]
-
-  # in some cases, the region_code is betewen 1 and 9, in this case
-  # if we call the api with this integer we'll get an error since the
-  # api expects a 01, 02, etc. so we need to fix this
-  region_code <- selected_region[, region_code_t]
-  print(region_code)
-  if(nchar(region_code) == 1) region_code = paste0("0", region_code)
+  if(region_name == "all"){
+    selected_region <- data.table(region_type_t = region_type
+                                  , region_code_t = "all"
+                                  , name_t = "all"
+                                  , region_short_name_t = "all")
+  }else{
+    # filter the regions data.table for the selected region
+    selected_region <- regions_dt[region_short_name_t == region_name
+                                   , .(region_type_t, region_code_t, name_t, region_short_name_t)]
+    
+    # in some cases, the region_code is betewen 1 and 9, in this case
+    # if we call the api with this integer we'll get an error since the
+    # api expects a 01, 02, etc. so we need to fix this
+    region_code <- selected_region[, region_code_t]
+    print(region_code)
+    if(nchar(region_code) == 1) region_code = paste0("0", region_code) 
+  }
 
   # now we'll filter the clusters data to get the info for the cluster selected
   clusters_avlbl <- meta_data_list$clusters_avlbl
