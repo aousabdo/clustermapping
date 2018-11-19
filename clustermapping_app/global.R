@@ -399,10 +399,11 @@ get_region_clusters <- function(cluster = NULL
   #-------------------------------------------------------------------------------------#
   
   if(region_name == "all"){
+    region_code <- "all"
     selected_region <- data.table(region_type_t = region_type
-                                  , region_code_t = "all"
-                                  , name_t = "all"
-                                  , region_short_name_t = "all")
+                                  , region_code_t = region_code
+                                  , name_t = region_name
+                                  , region_short_name_t = region_name)
   }else{
     # filter the regions data.table for the selected region
     selected_region <- regions_dt[region_short_name_t == region_name
