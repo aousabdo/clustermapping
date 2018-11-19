@@ -5,7 +5,7 @@ library(data.table)
 library(splitstackshape)
 library(plotly)
 library(lubridate)
-library(qdapTools) # only to use the list2df, which I could use melt instead
+library(qdapTools) # only to use the list2df, which we could replace with melt instead
 library(tesseract) # only to do OCR on the clustermapping.us api documentation manual
 library(networkD3)
 library(visNetwork)
@@ -311,9 +311,9 @@ get_region_clusters <- function(cluster = NULL
                                 , meta_data_list = meta_data
                                 , base_url = "http://54.83.53.228/data"
                                 , verbose = TRUE){
-
+  
   # return cluster-level data including by range of years
-
+  
   # function arguments
   # cluster: a valid cluster code, 6 for example, 
   #          a valid cluster key such as distribution_and_electronic_commerce
@@ -337,14 +337,14 @@ get_region_clusters <- function(cluster = NULL
   #          /data/cluster/3/all/state/55
   # Example: to return data available for the Apparel cluster across all states from 2009:2011
   #          /data/cluster/3/2009,2010,2011/state/all
-
+  
   #-------------------------------------------------------------------------------------#
   #-------------------------------- perform args checks --------------------------------#
   #-------------------------------------------------------------------------------------#
   
   # check the base_url
   if(is.null(base_url)){
-     stop("\tbase_url can't be NULL, you might wanna try setting it to: http://54.83.53.228/data")
+    stop("\tbase_url can't be NULL, you might wanna try setting it to: http://54.83.53.228/data")
   }
   
   # we need the meta_data_list list to do some checks, so make sure we have that object
@@ -360,13 +360,12 @@ get_region_clusters <- function(cluster = NULL
     clusters_names_avlbl <- c(clusters_names_avlbl, "traded", "local", "all")
     if(sum(cluster == clusters_names_avlbl) == 0) stop("\tcluster selected doesn't exist...\n")
   }
-
+  
   # if the region_name given is "all", then we don't need the regions_dt data.table object 
   # to check information about the region since the user is requesting all regions
   # if the region_name is not equal to "all" then we need to have the regions_dt data.table
   # to get the info about the region
   if(region_name == "all"){
-    print(region_type)
     if(is.null(region_type)){
       stop("\tYou must supply a region type...\n")
     } else if(!(region_type %in% meta_data_list[["region_types_avlbl"]][, variable])){
@@ -410,19 +409,22 @@ get_region_clusters <- function(cluster = NULL
   }else{
     # filter the regions data.table for the selected region
     selected_region <- regions_dt[region_short_name_t == region_name
-                                   , .(region_type_t, region_code_t, name_t, region_short_name_t)]
+                                  , .(region_type_t, region_code_t, name_t, region_short_name_t)]
     
     # in some cases, the region_code is betewen 1 and 9, in this case
     # if we call the api with this integer we'll get an error since the
     # api expects a 01, 02, etc. so we need to fix this
     region_code <- selected_region[, region_code_t]
-    print(region_code)
     if(nchar(region_code) == 1) region_code = paste0("0", region_code) 
   }
-
-  # now we'll filter the clusters data to get the info for the cluster selected
-  clusters_avlbl <- meta_data_list$clusters_avlbl
-  selected_cluster_code <- clusters_avlbl[clusters_names == cluster, clusters_codes]
+  
+  if(is.character(cluster)){
+    selected_cluster_code <- cluster
+  }else{
+    # now we'll filter the clusters data to get the info for the cluster selected
+    clusters_avlbl <- meta_data_list$clusters_avlbl
+    selected_cluster_code <- clusters_avlbl[clusters_names == cluster, clusters_codes]
+  }
   
   # if mulitple years are given then collaps witn a comma
   if(length(year_selected) > 1){
@@ -431,7 +433,8 @@ get_region_clusters <- function(cluster = NULL
   
   # now that we have the selected region, we can get the region's clusters
   # let's build our query
-  query <- paste(base_url, "cluster", selected_cluster_code, year_selected, selected_region[, region_type_t], region_code, sep = "/")
+  query <- paste(base_url, "cluster", selected_cluster_code
+                 , year_selected, selected_region[, region_type_t], region_code, sep = "/")
   
   if(verbose) invisible(cat("\tRunning the following query: ", query, "\n"))
   region_cluster_dt <- jsonlite::fromJSON(query, simplifyVector = TRUE)
