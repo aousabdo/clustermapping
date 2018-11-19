@@ -354,11 +354,15 @@ get_region_clusters <- function(cluster = NULL
   if(is.null(cluster)){
     stop("\tYou must provide a valid cluster name or a cluster key or just select \"all\" for all clusters, \"traded\" for traded clusters, or \"local\" for local clusters\n")
   }else if(is.numeric(cluster)){ 
-    if(!(cluster %in% meta_data_list$clusters_avlbl$clusters_codes)) stop("\tcluster selected doesn't exist...\n")
+    if(!(cluster %in% meta_data_list$clusters_avlbl$clusters_codes)){
+      stop("\tcluster selected doesn't exist...\n")
+    }else{selected_cluster_code <- cluster}
   }else if(is.character(cluster)){
     clusters_names_avlbl <- meta_data_list$clusters_avlbl$clusters_names
     clusters_names_avlbl <- c(clusters_names_avlbl, "traded", "local", "all")
-    if(sum(cluster == clusters_names_avlbl) == 0) stop("\tcluster selected doesn't exist...\n")
+    if(sum(cluster == clusters_names_avlbl) == 0){
+      stop("\tcluster selected doesn't exist...\n")
+    }else{selected_cluster_code <- cluster}
   }
   
   # if the region_name given is "all", then we don't need the regions_dt data.table object 
@@ -417,15 +421,7 @@ get_region_clusters <- function(cluster = NULL
     region_code <- selected_region[, region_code_t]
     if(nchar(region_code) == 1) region_code = paste0("0", region_code) 
   }
-  
-  if(is.character(cluster)){
-    selected_cluster_code <- cluster
-  }else{
-    # now we'll filter the clusters data to get the info for the cluster selected
-    clusters_avlbl <- meta_data_list$clusters_avlbl
-    selected_cluster_code <- clusters_avlbl[clusters_names == cluster, clusters_codes]
-  }
-  
+
   # if mulitple years are given then collaps witn a comma
   if(length(year_selected) > 1){
     year_selected <- paste(year_selected, collapse = ",")
