@@ -392,6 +392,9 @@ get_region_clusters <- function(cluster = NULL
   }else if(is.character(year_selected)){
     if(!(year_selected %in% c("latest", "earliest", "all")))
       stop("\tYear selected is outside of bound...\n")
+    else if(year_selected == "latest"){year_selected <- max(meta_data_list[["years_avlbl"]])}
+    else if(year_selected == "earliest"){year_selected <- min(meta_data_list[["years_avlbl"]])}
+    else if(year_selected == "all"){year_selected <- as.integer(meta_data_list[["years_avlbl"]])}
   } else {stop("\tYear selected is invalid")}
   
   #-------------------------------------------------------------------------------------#
