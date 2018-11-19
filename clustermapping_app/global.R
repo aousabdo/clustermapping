@@ -309,7 +309,8 @@ get_region_clusters <- function(cluster = NULL
                                 , year_selected = 2016
                                 , cluster_selected = "all"
                                 , meta_data_list = meta_data
-                                , base_url = "http://54.83.53.228/data"){
+                                , base_url = "http://54.83.53.228/data"
+                                , verbose = TRUE){
 
   # return cluster-level data including by range of years
 
@@ -321,11 +322,11 @@ get_region_clusters <- function(cluster = NULL
   #          "all" for all clusters
   # region_name: valid name for a region, this can also be "all" to retrieve data for all
   # regions given a valid region type
-  # region_type: a valid region type. valid region types are listed in the meta_data$region_types_avlbl
+  # region_type: a valid region type. valid region types are listed in the meta_data_list$region_types_avlbl
   # regions_dt: a valid data.table regions object. This data.table is produced with the
   #             data_ETL.R code
   # year_selected: a valid year in the form YYYY. Valid values can be found in the
-  #                meta_data list which is produced by the data_ETL.R code.
+  #                meta_data_list which is produced by the data_ETL.R code.
   #           Valid values:
   #                "all":      to retrieve all years
   #                "earliest": to retrieve data for the earliest year
@@ -337,9 +338,16 @@ get_region_clusters <- function(cluster = NULL
   # Example: to return data available for the Apparel cluster across all states from 2009:2011
   #          /data/cluster/3/2009,2010,2011/state/all
 
-  # checks
-
-  # we need the meta_data list to do some checks, so make sure we have that object
+  #-------------------------------------------------------------------------------------#
+  #-------------------------------- perform args checks --------------------------------#
+  #-------------------------------------------------------------------------------------#
+  
+  # check the base_url
+  if(is.null(base_url)){
+     stop("\tbase_url can't be NULL, you might wanna try setting it to: http://54.83.53.228/data")
+  }
+  
+  # we need the meta_data_list list to do some checks, so make sure we have that object
   if(is.null(meta_data_list)) stop("\tYou must supply a valid meta_data_list object...\n")
   
   # now check the cluster selected
@@ -353,28 +361,68 @@ get_region_clusters <- function(cluster = NULL
     if(sum(cluster == clusters_names_avlbl) == 0) stop("\tcluster selected doesn't exist...\n")
   }
 
-  # check the regions_dt data.table
-  if(is.null(regions_dt)) stop("\tPlease supply a region_dt data.table...\n")
-  if(!is.data.table(regions_dt)) stop("\tregions_dt must be a data.table object...\n")
-
-  # make sure the regions_name is valid
-  if(regions_dt[region_short_name_t == region_name, .N] == 0) stop("\tRegion selected is not valid...\n")
-
-  # make sure the region_type is valid
-  if(!is.null(region_type)){
-    if(!(region_type %in% meta_data[["region_types_avlbl"]])) stop("\tRegion type selected is not vaild...\n")
-  }else{region_type <- regions_dt[region_short_name_t == region_name, region_type_t]}
-
-
+  # if the region_name given is "all", then we don't need the regions_dt data.table object 
+  # to check information about the region since the user is requesting all regions
+  # if the region_name is not equal to "all" then we need to have the regions_dt data.table
+  # to get the info about the region
+  if(region_name == "all"){
+    print(region_type)
+    if(!(region_type %in% meta_data_list[["region_types_avlbl"]][, variable])) stop("\tRegion type selected is not vaild...\n")
+  }else{
+    # check the regions_dt data.table
+    if(is.null(regions_dt)) stop("\tPlease supply a region_dt data.table...\n")
+    if(!is.data.table(regions_dt)) stop("\tregions_dt must be a data.table object...\n")
+    
+    # make sure the regions_name is valid
+    if(regions_dt[region_short_name_t == region_name, .N] == 0) stop("\tRegion selected is not valid...\n")
+    
+    # make sure the region_type is valid
+    if(!is.null(region_type)){
+      if(!(region_type %in% meta_data_list[["region_types_avlbl"]][, variable])) stop("\tRegion type selected is not vaild...\n")
+    }else{region_type <- regions_dt[region_short_name_t == region_name, region_type_t]}
+  }
+  # now check the year selected
+  if(is.numeric(year_selected)){
+    if(sum(year_selected %in% meta_data_list$years_avlbl) != length(year_selected))
+      stop("\tYear selected is outside of bound...\n")
+  }else if(is.character(year_selected)){
+    if(!(year_selected %in% c("latest", "earliest", "all")))
+      stop("\tYear selected is outside of bound...\n")
+  } else {stop("\tYear selected is invalid")}
+  
+  #-------------------------------------------------------------------------------------#
+  #------------------------------ End: perform args checks -----------------------------#
+  #-------------------------------------------------------------------------------------#
+  
   # filter the regions data.table for the selected region
-  selected_region <- regions_dt[region_short_name_t == region_name
+  selected_region <<- regions_dt[region_short_name_t == region_name
                                 , .(region_type_t, region_code_t, name_t, region_short_name_t)]
 
-  # in some cases, the region_code is between 1 and 9, in this case
+  # in some cases, the region_code is betewen 1 and 9, in this case
   # if we call the api with this integer we'll get an error since the
   # api expects a 01, 02, etc. so we need to fix this
   region_code <- selected_region[, region_code_t]
+  print(region_code)
   if(nchar(region_code) == 1) region_code = paste0("0", region_code)
+
+  # now we'll filter the clusters data to get the info for the cluster selected
+  clusters_avlbl <- meta_data_list$clusters_avlbl
+  selected_cluster_code <- clusters_avlbl[clusters_names == cluster, clusters_codes]
+  
+  # if mulitple years are given then collaps witn a comma
+  if(length(year_selected) > 1){
+    year_selected <- paste(year_selected, collapse = ",")
+  }
+  
+  # now that we have the selected region, we can get the region's clusters
+  # let's build our query
+  query <- paste(base_url, "cluster", selected_cluster_code, year_selected, selected_region[, region_type_t], region_code, sep = "/")
+  
+  if(verbose) invisible(cat("\tRunning the following query: ", query, "\n"))
+  region_cluster_dt <- jsonlite::fromJSON(query, simplifyVector = TRUE)
+  region_cluster_dt <- as.data.table(region_cluster_dt)
+  
+  return(region_cluster_dt)
 }
 #========================================================================================#
 #================================ End: get_region_clusters ==============================#
