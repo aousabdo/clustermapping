@@ -10,25 +10,29 @@ shinyUI(fluidPage(
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     sidebarPanel( 
-       selectInput(inputId = "region_name"
-                   , label = "Select a Region"
-                   , choices = region_names), 
-       selectInput(inputId = "year"
-                   , label = "Select a Year"
-                   , choices = meta_data$years_avlbl
-                   , selected = max(meta_data$years_avlbl))
+      selectInput(inputId = "region_name"
+                  , label = "Select a Region"
+                  , choices = region_names), 
+      selectInput(inputId = "year"
+                  , label = "Select a Year"
+                  , choices = meta_data$years_avlbl
+                  , selected = max(meta_data$years_avlbl))
     ),
     
     # Show a plot of the generated distribution
-    mainPanel(
-      h1('Strong Clusters in selected region'), hr(), 
-      DT::dataTableOutput("strong_clusters"), 
-      shiny::dataTableOutput("related_clusters"),
-      shiny::dataTableOutput("sub_clusters"),
-      shiny::dataTableOutput("industries"),
-      forceNetworkOutput("forceNetwork_Viz"),
-      sankeyNetworkOutput("sankeyNetwork_Viz"),
-      visNetworkOutput("vizNetwork_basic")
+    mainPanel(h1('Strong Clusters in selected region'), hr(),
+              DT::dataTableOutput("strong_clusters"),
+              tabsetPanel(
+                tabPanel("Figures",
+                         sankeyNetworkOutput("sankeyNetwork_Viz"),
+                         visNetworkOutput("vizNetwork_basic")),
+                tabPanel("Tables",
+                         shiny::dataTableOutput("related_clusters"),
+                         shiny::dataTableOutput("sub_clusters"),
+                         shiny::dataTableOutput("industries")
+                         # , forceNetworkOutput("forceNetwork_Viz")
+                )
+              )
     )
   )
 ))
