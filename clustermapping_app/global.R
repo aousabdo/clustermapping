@@ -457,7 +457,9 @@ get_region_clusters <- function(cluster = NULL
 build_cluster_plots <- function(region_clusters_dt = NULL
                                 , N_top_clusters = 10
                                 , year_selected = 2016
-                                , traded_only = TRUE){
+                                , traded_only = TRUE
+                                , start_year = 1998
+                                , end_year   = 2016){
   
   # make a copy of the data.table
   region_cluster <- copy(region_clusters_dt)
@@ -494,9 +496,39 @@ build_cluster_plots <- function(region_clusters_dt = NULL
            yaxis = list(title = "",showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
            margin = list(l = 350, r = 50, b = 50, t = 50, pad = 4))
   
+  p3 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE] 
+               , x = ~ private_wage_tf
+               , y = ~reorder(cluster_name_t, private_wage_tf)
+               , type = 'bar'
+               , orientation = "h") %>%
+    layout(title = paste0("Wages by Traded Cluster, ", year_selected),  
+           xaxis = list(title = paste0("Wages, ", year_selected), showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
+           yaxis = list(title = "", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
+           margin = list(l = 350, r = 50, b = 50, t = 50, pad = 4))
+  
+  # get job creation by cluster by year
+  job_creation <- region_clusters_dt[(year_t == start_year | year_t == end_year) & traded_b] %>%   
+    group_by(cluster_name_t) %>%
+    summarise(job_creation_numbers = emp_tl[year_t == end_year] - emp_tl[year_t == start_year]) %>%
+    arrange(desc(job_creation_numbers)) %>%
+    mutate(change = ifelse(job_creation_numbers >= 0, "Increased", "Decreased"))
+  
+  p4 <- job_creation %>% ggplot(aes(x = reorder(cluster_name_t, -job_creation_numbers), y = job_creation_numbers, fill = change)) 
+  p4 <- p4 + geom_bar(stat = "identity") + scale_fill_manual(values=c("red", "blue")) +
+    theme_minimal() + theme(legend.position="none", axis.text.x = element_text(angle = 80, hjust = 1)) + 
+    ylab(paste('Job Creation', start_year, "to", end_year, sep = " ")) + xlab("Cluster")
+  
+  gg <- ggplotly(p4) 
+  gg <- gg %>% layout(title = paste0("Job Creation by Traded Cluster, ", start_year, "-", end_year),  
+         xaxis = list(title = "Clusters", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
+         yaxis = list(title = "", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
+         margin = list(l = 50, r = 50, b = 350, t = 50, pad = 4))
+  
   list_to_return <- list(top_clusters = top_clusters
                          , donut_chart = p1
-                         , cluster_emp = p2)
+                         , cluster_emp = p2
+                         , cluster_wages = p3
+                         , cluster_job_creation = gg)
 }
 #========================================================================================#
 #============================= End: build_cluster_plots =================================#
