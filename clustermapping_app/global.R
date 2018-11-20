@@ -459,7 +459,14 @@ build_cluster_plots <- function(region_clusters_dt = NULL
                                 , year_selected = 2016
                                 , traded_only = TRUE
                                 , start_year = 1998
-                                , end_year   = 2016){
+                                , end_year   = 2016
+                                , meta_data_list = meta_data){
+  
+  # chech the years given
+  if(!(year_selected %in% meta_data_list[["years_avlbl"]])) stop("\tYear selected is out of range...\n")
+  if(!(start_year%in% meta_data_list[["years_avlbl"]])) stop("\tstart year is out of range...\n")
+  if(!(end_year %in% meta_data_list[["years_avlbl"]])) stop("\tend year is out of range...\n")
+  if(start_year >= end_year) stop("\tStart year must be less than end year...\n")
   
   # make a copy of the data.table
   region_cluster <- copy(region_clusters_dt)
@@ -486,7 +493,7 @@ build_cluster_plots <- function(region_clusters_dt = NULL
            xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
            yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
   
-  p2 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE] 
+    p2 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE] 
                 , x = ~ emp_tl
                 , y = ~reorder(cluster_name_t, emp_tl)
                 , type = 'bar'
