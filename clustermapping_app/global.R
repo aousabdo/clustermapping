@@ -520,16 +520,22 @@ build_cluster_plots <- function(region_clusters_dt = NULL
     arrange(desc(job_creation_numbers)) %>%
     mutate(change = ifelse(job_creation_numbers >= 0, "Increased", "Decreased"))
   
-  p4 <- job_creation %>% ggplot(aes(x = reorder(cluster_name_t, -job_creation_numbers), y = job_creation_numbers, fill = change)) 
+  p4 <- job_creation %>% 
+    ggplot(aes(x = reorder(cluster_name_t, -job_creation_numbers)
+               , y = job_creation_numbers
+               , fill = change
+               , text = paste0(cluster_name_t, "\nJob Creation:", job_creation_numbers))) 
+  
   p4 <- p4 + geom_bar(stat = "identity") + scale_fill_manual(values=c("red", "blue")) +
     theme_minimal() + theme(legend.position="none", axis.text.x = element_text(angle = 80, hjust = 1)) + 
     ylab(paste('Job Creation', start_year, "to", end_year, sep = " ")) + xlab("Cluster")
   
-  gg <- ggplotly(p4) 
-  gg <- gg %>% layout(title = paste0("Job Creation by Traded Cluster, ", start_year, "-", end_year),  
+  gg <- ggplotly(p4, tooltip = c("text")) 
+  gg <- gg %>% layout(title = paste0("Job Creation by Traded Cluster, ", start_year, "-", end_year),
          xaxis = list(title = "Clusters", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
          yaxis = list(title = "", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
          margin = list(l = 50, r = 50, b = 350, t = 50, pad = 4))
+    # style(gg, hoveron = "points", hoverinfo = "text", hoverlabel = list(bgcolor = "white"))
   
   list_to_return <- list(top_clusters = top_clusters
                          , donut_chart = p1
