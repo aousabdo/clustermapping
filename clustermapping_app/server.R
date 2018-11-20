@@ -16,9 +16,14 @@ shinyServer(function(input, output) {
     })
 
   cluster_data <- reactive({
+    strong_clusters <- strong_clusters_dt()
+    # if the user hasn't yet selected a cluster, pick the first one
+    if(is.null(input$strong_clusters_rows_selected)) strong_clusters_rows_selected <- 1
+    else strong_clusters_rows_selected <- input$strong_clusters_rows_selected
+    
     # call the function that gets the cluster data
-    get_cluster_data(strong_clusters_dt = strong_clusters_dt()
-                     , strong_clusters_rows_selected = input$strong_clusters_rows_selected)
+    get_cluster_data(strong_clusters_dt = strong_clusters
+                     , strong_clusters_rows_selected = strong_clusters_rows_selected)
   })
   
   network_viz <- reactive({
