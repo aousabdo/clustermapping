@@ -423,7 +423,7 @@ get_region_clusters <- function(cluster = NULL
     region_code <- selected_region[, region_code_t]
     if(nchar(region_code) == 1) region_code = paste0("0", region_code) 
   }
-
+  
   # if mulitple years are given then collaps witn a comma
   if(length(year_selected) > 1){
     year_selected <- paste(year_selected, collapse = ",")
@@ -438,8 +438,66 @@ get_region_clusters <- function(cluster = NULL
   region_cluster_dt <- jsonlite::fromJSON(query, simplifyVector = TRUE)
   region_cluster_dt <- as.data.table(region_cluster_dt)
   
+  # some final data transformations
+  region_cluster_dt[, year_t := as.integer(year_t)]
+  region_cluster_dt[, cluster_code_t := as.integer(cluster_code_t)]
+  
+  # add a column specifiying cluster type
+  region_cluster_dt[, cluster_type := factor(ifelse(traded_b, "traded", "local"))]
+  
   return(region_cluster_dt)
 }
 #========================================================================================#
 #================================ End: get_region_clusters ==============================#
+#========================================================================================#
+
+#========================================================================================#
+#================================ build_cluster_plots ===================================#
+#========================================================================================#
+build_cluster_plots <- function(region_clusters_dt = NULL
+                                , N_top_clusters = 10
+                                , year_selected = 2016
+                                , traded_only = TRUE){
+  
+  # make a copy of the data.table
+  region_cluster <- copy(region_clusters_dt)
+  
+  # get rid of clusters with no employment
+  region_cluster <- region_cluster[emp_tl > 0]
+  
+  # set proper orders
+  setorder(region_cluster,  -year_t, -emp_tl)
+  
+  # top clusters by year
+  if(traded_only){
+    top_clusters <- region_cluster[traded_b == TRUE,  head(.SD, N_top_clusters), by = year_t][, .(cluster_name_t, emp_tl, year_t, emp_tl_rank_i)]
+  }else{
+    top_clusters <- region_cluster[,  head(.SD, N_top_clusters), by = year_t][, .(cluster_name_t, emp_tl, year_t, emp_tl_rank_i)]
+  }
+  
+  p1 <- region_cluster[year_t == year_selected] %>% 
+    group_by(cluster_type) %>%
+    summarise(count = n()) %>%
+    plot_ly(labels = ~ cluster_type, values = ~ count) %>%
+    add_pie(hole = 0.6) %>%
+    layout(title = paste0("Traded vs. Local Clusters, ", year_selected),  showlegend = T,
+           xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+           yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+  
+  p2 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE] 
+                , x = ~ emp_tl
+                , y = ~reorder(cluster_name_t, emp_tl)
+                , type = 'bar'
+                , orientation = "h") %>%
+    layout(title = paste0("Employment by Traded Cluster, ", year_selected),  
+           xaxis = list(title = paste0("Employment, ", year_selected), showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
+           yaxis = list(title = "",showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
+           margin = list(l = 350, r = 50, b = 50, t = 50, pad = 4))
+  
+  list_to_return <- list(top_clusters = top_clusters
+                         , donut_chart = p1
+                         , cluster_emp = p2)
+}
+#========================================================================================#
+#============================= End: build_cluster_plots =================================#
 #========================================================================================#
