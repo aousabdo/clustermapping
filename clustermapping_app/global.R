@@ -354,7 +354,7 @@ get_region_clusters <- function(cluster = NULL
   if(is.null(cluster)){
     stop("\tYou must provide a valid cluster name or a cluster key or just select \"all\" for all clusters, \"traded\" for traded clusters, or \"local\" for local clusters\n")
   }else if(length(cluster) > 1){
-    stop("\tSelect only one clustet...\n")
+    stop("\tSelect only one cluster...\n")
   }else if(is.numeric(cluster)){ 
     if(!(cluster %in% meta_data_list$clusters_avlbl$clusters_codes)){
       stop("\tcluster selected doesn't exist...\n")
