@@ -23,15 +23,17 @@ shinyUI(fluidPage(
     mainPanel(h1('Strong Clusters in selected region'), hr(),
               DT::dataTableOutput("strong_clusters"),
               tabsetPanel(
-                tabPanel("Figures",
-                         sankeyNetworkOutput("sankeyNetwork_Viz"),
-                         visNetworkOutput("vizNetwork_basic")
+                tabPanel("Related Clusters",
+                         sankeyNetworkOutput("sankeyNetwork_Viz", width = "600px", height = "600px"),
+                         visNetworkOutput("vizNetwork_basic", width = "600px", height = "600px")
                          # , textOutput("region_clusters")
-                         # , DT::dataTableOutput("top_clusters")
+                ),
+                tabPanel("Region Figures"
                          , plotly::plotlyOutput("donut_chart", width = "500px", height = "500px")
                          , plotly::plotlyOutput("cluster_emp", width = "1000px", height = "600px")
                          , plotly::plotlyOutput("cluster_wages", width = "1000px", height = "600px")
                          , plotly::plotlyOutput("cluster_job_creation", width = "1000px", height = "1000px")
+                         , DT::dataTableOutput("top_clusters")
                          ),
                 tabPanel("Tables",
                          shiny::dataTableOutput("related_clusters"),
