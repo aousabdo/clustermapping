@@ -25,7 +25,14 @@ shinyUI(fluidPage(
               tabsetPanel(
                 tabPanel("Figures",
                          sankeyNetworkOutput("sankeyNetwork_Viz"),
-                         visNetworkOutput("vizNetwork_basic")),
+                         visNetworkOutput("vizNetwork_basic")
+                         # , textOutput("region_clusters")
+                         # , DT::dataTableOutput("top_clusters")
+                         , plotly::plotlyOutput("donut_chart", width = "500px", height = "500px")
+                         , plotly::plotlyOutput("cluster_emp", width = "1000px", height = "600px")
+                         , plotly::plotlyOutput("cluster_wages", width = "1000px", height = "600px")
+                         , plotly::plotlyOutput("cluster_job_creation", width = "1000px", height = "1000px")
+                         ),
                 tabPanel("Tables",
                          shiny::dataTableOutput("related_clusters"),
                          shiny::dataTableOutput("sub_clusters"),

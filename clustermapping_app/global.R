@@ -12,6 +12,7 @@ library(visNetwork)
 library(igraph)
 library(stringr)
 library(data.table)
+library(htmlwidgets)
 
 # supress warnings
 options(warn = -1)
@@ -258,14 +259,16 @@ build_network_viz <- function(cluster_data = NULL){
     Source = "from", Target = "to",      # so the network is directed.
     NodeID = "cluster_name", Group = "id", Value = "weight", 
     opacity = 1, fontSize = 8, zoom = TRUE, opacityNoHover = T, legend = F
-  )
+  ) %>%
+    htmlwidgets::prependContent(htmltools::tags$h1("Related Clusters"))
   
   # create a sankey network diagram
   sankeyNetwork_viz <- sankeyNetwork(
     Links = edges_d3, Nodes = nodes_d3,
     Source = "from", Target = "to",
     NodeID = "cluster_name", Value = "weight",
-    fontSize = 16)
+    fontSize = 16) %>%
+    htmlwidgets::prependContent(htmltools::tags$h1("Related Clusters"))
   
   # let's make some network graphs with the vizNetwork library
   # to use the visNetwork package we need to have columns with specifict names
@@ -364,7 +367,7 @@ get_region_clusters <- function(cluster = NULL
     clusters_names_avlbl <- c(clusters_names_avlbl, "traded", "local", "all")
     if(sum(cluster == clusters_names_avlbl) == 0){
       stop("\tcluster selected doesn't exist...\n")
-    }else{selected_cluster_code <- cluster}
+    }else{selected_cluster_code <- clusters_avlbl[clusters_names == cluster, clusters_codes]}
   }
   
   # if the region_name given is "all", then we don't need the regions_dt data.table object 
@@ -429,6 +432,7 @@ get_region_clusters <- function(cluster = NULL
     year_selected <- paste(year_selected, collapse = ",")
   }
   
+  if(cluster == "all") selected_cluster_code <- "all"
   # now that we have the selected region, we can get the region's clusters
   # let's build our query
   query <- paste(base_url, "cluster", selected_cluster_code
@@ -438,6 +442,7 @@ get_region_clusters <- function(cluster = NULL
   region_cluster_dt <- jsonlite::fromJSON(query, simplifyVector = TRUE)
   region_cluster_dt <- as.data.table(region_cluster_dt)
   
+  foo2 <<- copy(region_cluster_dt)
   # some final data transformations
   region_cluster_dt[, year_t := as.integer(year_t)]
   region_cluster_dt[, cluster_code_t := as.integer(cluster_code_t)]
@@ -535,7 +540,6 @@ build_cluster_plots <- function(region_clusters_dt = NULL
          xaxis = list(title = "Clusters", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
          yaxis = list(title = "", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
          margin = list(l = 50, r = 50, b = 350, t = 50, pad = 4))
-    # style(gg, hoveron = "points", hoverinfo = "text", hoverlabel = list(bgcolor = "white"))
   
   list_to_return <- list(top_clusters = top_clusters
                          , donut_chart = p1
