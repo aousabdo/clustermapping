@@ -64,8 +64,10 @@ regions_dt <- regions_dt[region_type_t != "custom"]
 
 # some data transformations
 regions_dt[, region_type_t := factor(region_type_t)]
-regions_dt[, region_state_code_t := as.integer(region_state_code_t)]
-regions_dt[, region_code_t := as.integer(region_code_t)]
+# don't do the below transformations since these are actually character values which will be misses up 
+# if we converth them into integers
+# regions_dt[, region_state_code_t := as.integer(region_state_code_t)]
+# regions_dt[, region_code_t := as.integer(region_code_t)]
 
 # For the three countries in the list, the region_short_name_t is NA, we need 
 # to correct that
