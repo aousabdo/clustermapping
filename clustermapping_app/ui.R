@@ -20,8 +20,9 @@ shinyUI(fluidPage(
     ),
     
     # Show a plot of the generated distribution
-    mainPanel(h1('Strong Clusters in selected region'), hr(),
-              DT::dataTableOutput("strong_clusters"),
+    mainPanel(h1(textOutput("text_1"))
+              , hr()
+              , DT::dataTableOutput("strong_clusters"),
               tabsetPanel(
                 tabPanel("Related Clusters",
                          sankeyNetworkOutput("sankeyNetwork_Viz", width = "600px", height = "600px"),

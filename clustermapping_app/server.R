@@ -8,6 +8,10 @@ source("./global.R")
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
   
+  output$text_1 <- renderText({ 
+    paste0("Strong Clusters in ", input$region_name, ", ", input$year)
+  })
+  
   strong_clusters_dt <- reactive({
     # call the function that gets the strong clusters for a given region and year
     get_strong_clusters(region_name = input$region_name
