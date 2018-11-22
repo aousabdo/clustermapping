@@ -39,8 +39,9 @@ clusters_avlbl <- clusters_data$clusters_avlbl
 get_strong_clusters <- function(region_name = NULL
                                 , regions_dt = NULL
                                 , year_selected = 2016
-                                , meta_data = NULL
-                                , base_url = "http://54.83.53.228/data"){
+                                , meta_data_list = meta_dta
+                                , base_url = "http://54.83.53.228/data"
+                                , verbose = TRUE){
   # given a region name, a regions_dt, and a year, this function will return a 
   # data.table object with the strong clusters for that region
   
@@ -53,21 +54,25 @@ get_strong_clusters <- function(region_name = NULL
   if(regions_dt[region_short_name_t == region_name, .N] == 0) stop("\tRegion selected is not valid...\n")
   
   # filter the regions data.table for the selected region
-  selected_region <- regions_dt[region_short_name_t == region_name
-                                , .(region_type_t, region_code_t, name_t, region_short_name_t)]
+  selected_region_info <<- regions_dt[region_short_name_t == region_name
+                                      , .(region_type_t, region_code_t, name_t, region_short_name_t)]
   
   # in some cases, the region_code is between 1 and 9, in this case
   # if we call the api with this integer we'll get an error since the 
   # api expects a 01, 02, etc. so we need to fix this
-  region_code <- selected_region[, region_code_t]
+  region_code <- selected_region_info[, region_code_t]
   if(nchar(region_code) == 1) region_code = paste0("0", region_code)
   
   # get general data about the selected region
-  query <- paste(base_url, "region", selected_region[, region_type_t]
+  query <- paste(base_url, "region", selected_region_info[, region_type_t]
                  , region_code, year_selected, sep = "/")
   
-  selected_region <- jsonlite::fromJSON(query)
-  if(length(selected_region) == 0) stop("\tSorry, the region selected has no data from the source...\n")
+  if(verbose) invisible(cat("\tRunning the following query: ", query, "\n"))
+  
+  selected_region <<- jsonlite::fromJSON(query)
+  
+  # in some cases, the region selected would have no strong clusters, in that case
+  # we'll just return the region clusters
   
   # convert to data.table object
   selected_region <- as.data.table(selected_region)
@@ -75,29 +80,47 @@ get_strong_clusters <- function(region_name = NULL
   # get a list of strong clusters for selected region
   strong_clusters <- selected_region$strong_clusters
   
-  # prepare strong-clusters data
-  cluster_name <- sapply(strong_clusters, function(x) x$name)
-  cluster_code <- sapply(strong_clusters, function(x) x$code)
-  cluster_key  <- sapply(strong_clusters, function(x) x$key)
-  cluster_pos  <- sapply(strong_clusters, function(x) x$pos)
-  
-  # bind strong-cluster data in one data.table object
-  strong_clusters <- cbind(cluster_name, cluster_code, cluster_key, cluster_pos)
-  strong_clusters <- as.data.table(strong_clusters)
-  
-  # some data transformations
-  strong_clusters[, cluster_code := as.integer(cluster_code)]
-  
-  # the cluster position vector starts at 0, correct that since in R we start at 1
-  strong_clusters[, cluster_pos  := as.integer(cluster_pos) + 1] 
-  # strong_clusters[, cluster_name := factor(cluster_name)]
-  strong_clusters[, cluster_key  := factor(cluster_key)]
-  
-  strong_clusters <- unique(strong_clusters)
-  
-  # set data.table key
-  setkey(strong_clusters, cluster_pos)
-  
+  if(length(strong_clusters) != 0){    
+    if(verbose)invisible(cat("\tStrong clusters found\n"))
+    
+    # prepare strong-clusters data
+    cluster_name <- sapply(strong_clusters, function(x) x$name)
+    cluster_code <- sapply(strong_clusters, function(x) x$code)
+    cluster_key  <- sapply(strong_clusters, function(x) x$key)
+    cluster_pos  <- sapply(strong_clusters, function(x) x$pos)
+    
+    # bind strong-cluster data in one data.table object
+    strong_clusters <- cbind(cluster_name, cluster_code, cluster_key, cluster_pos)
+    strong_clusters <- as.data.table(strong_clusters)
+    
+    # some data transformations
+    strong_clusters[, cluster_code := as.integer(cluster_code)]
+    
+    # the cluster position vector starts at 0, correct that since in R we start at 1
+    strong_clusters[, cluster_pos  := as.integer(cluster_pos) + 1] 
+    # strong_clusters[, cluster_name := factor(cluster_name)]
+    strong_clusters[, cluster_key  := factor(cluster_key)]
+    
+    strong_clusters <<- unique(strong_clusters)
+    
+    # set data.table key
+    setkey(strong_clusters, cluster_pos)
+  }else{
+    if(verbose)invisible(cat("\tNo strong clusters found, returning all clusters\n"))
+    
+    # if there are no strong clusters for the selected region, then just 
+    # return the region's clusters
+    region_clusters <<- get_region_clusters(cluster = "all"
+                                            , region_name = region_name
+                                            , region_type = selected_region_info[, region_type_t]
+                                            , regions_dt = regions_dt 
+                                            , year_selected = 2016
+                                            , cluster_selected = "all"
+                                            , meta_data_list = meta_data_list
+                                            , base_url = base_url
+                                            , verbose = verbose)
+    strong_clusters <- copy(region_clusters)
+  }
   return(strong_clusters)
 }
 #========================================================================================#
@@ -498,7 +521,7 @@ build_cluster_plots <- function(region_clusters_dt = NULL
            xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
            yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
   
-    p2 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE] 
+  p2 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE] 
                 , x = ~ emp_tl
                 , y = ~reorder(cluster_name_t, emp_tl)
                 , type = 'bar'
@@ -509,10 +532,10 @@ build_cluster_plots <- function(region_clusters_dt = NULL
            margin = list(l = 350, r = 50, b = 50, t = 50, pad = 4))
   
   p3 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE] 
-               , x = ~ private_wage_tf
-               , y = ~reorder(cluster_name_t, private_wage_tf)
-               , type = 'bar'
-               , orientation = "h") %>%
+                , x = ~ private_wage_tf
+                , y = ~reorder(cluster_name_t, private_wage_tf)
+                , type = 'bar'
+                , orientation = "h") %>%
     layout(title = paste0("\nWages by Traded Cluster, ", year_selected),  
            xaxis = list(title = paste0("Wages, ", year_selected), showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
            yaxis = list(title = "", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
@@ -537,9 +560,9 @@ build_cluster_plots <- function(region_clusters_dt = NULL
   
   gg <- ggplotly(p4, tooltip = c("text")) 
   gg <- gg %>% layout(title = paste0("Job Creation by Traded Cluster, ", start_year, "-", end_year),
-         xaxis = list(title = "Clusters", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
-         yaxis = list(title = "", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
-         margin = list(l = 50, r = 50, b = 350, t = 50, pad = 4))
+                      xaxis = list(title = "Clusters", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
+                      yaxis = list(title = "", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
+                      margin = list(l = 50, r = 50, b = 350, t = 50, pad = 4))
   
   list_to_return <- list(top_clusters = top_clusters
                          , donut_chart = p1
@@ -550,3 +573,20 @@ build_cluster_plots <- function(region_clusters_dt = NULL
 #========================================================================================#
 #============================= End: build_cluster_plots =================================#
 #========================================================================================#
+
+region_clusters_to_strong_clusters <- function(region_clusters = NULL
+                                               , meta_data_list = meta_data){
+  # convert a region_clusters table to a strong cluster table
+  # we'll just order the clusters by the number of employments
+  
+  # copy the region cluster data to be the strong clusters object
+  strong_clusters <- copy(region_clusters)
+  
+  # subset the data columns needed
+  strong_clusters <- strong_clusters[, .(cluster_name_t, cluster_code_t, emp_tl)]
+  
+  setnames(strong_clusters, .("cluster_name", "cluster_code", "emp_tl"))
+  
+  # add the two missing columns using the meta_data object
+  strong_clusters <- merge(strong_clusters, meta_data$clusters_avlbl)
+}

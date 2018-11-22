@@ -16,7 +16,8 @@ shinyServer(function(input, output) {
     # call the function that gets the strong clusters for a given region and year
     get_strong_clusters(region_name = input$region_name
                         , regions_dt = regions_dt
-                        , year_selected = input$year)
+                        , year_selected = input$year
+                        , meta_data_list = meta_data)
   })
   
   cluster_data <- reactive({
