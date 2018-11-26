@@ -574,19 +574,44 @@ build_cluster_plots <- function(region_clusters_dt = NULL
 #============================= End: build_cluster_plots =================================#
 #========================================================================================#
 
+#========================================================================================#
+#========================= region_clusters_to_strong_clusters ===========================#
+#========================================================================================#
 region_clusters_to_strong_clusters <- function(region_clusters = NULL
                                                , meta_data_list = meta_data){
   # convert a region_clusters table to a strong cluster table
   # we'll just order the clusters by the number of employments
   
   # copy the region cluster data to be the strong clusters object
-  strong_clusters <- copy(region_clusters)
+  strong_clusters <- region_clusters
   
   # subset the data columns needed
   strong_clusters <- strong_clusters[, .(cluster_name_t, cluster_code_t, emp_tl)]
   
-  setnames(strong_clusters, .("cluster_name", "cluster_code", "emp_tl"))
+  setnames(strong_clusters, c("cluster_name", "cluster_code", "emp_tl"))
+  
+  # get the clusters available data since we'll need to merge it with our table to get additional data columns
+  clusters_avlbl <- meta_data_list$clusters_avlbl
+  setnames(clusters_avlbl, c("cluster_id", "cluster_code", "cluster_key", "cluster_name"))
   
   # add the two missing columns using the meta_data object
-  strong_clusters <- merge(strong_clusters, meta_data$clusters_avlbl)
+  strong_clusters <- merge(strong_clusters, clusters_avlbl, by = c("cluster_code", "cluster_name"))
+  
+  # filter out clusters with no employments
+  strong_clusters <- strong_clusters[emp_tl > 0]
+  
+  # set key and reorder by employment numbers
+  setkey(strong_clusters, emp_tl)
+  setorder(strong_clusters, -emp_tl)
+  
+  # add cluster_pos
+  strong_clusters[, cluster_pos := 1:.N]
+  
+  # only keep columns that we need
+  strong_clusters <- strong_clusters[, .(cluster_name, cluster_code, cluster_key, cluster_pos)]
+  
+  return(strong_clusters)
 }
+#========================================================================================#
+#======================= End: region_clusters_to_strong_clusters ========================#
+#========================================================================================#
