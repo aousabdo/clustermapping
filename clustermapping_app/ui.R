@@ -25,8 +25,8 @@ shinyUI(fluidPage(
               , DT::dataTableOutput("strong_clusters"),
               tabsetPanel(
                 tabPanel("Related Clusters",
-                         sankeyNetworkOutput("sankeyNetwork_Viz", width = "600px", height = "600px"),
-                         visNetworkOutput("vizNetwork_basic", width = "600px", height = "600px")
+                         sankeyNetworkOutput("sankeyNetwork_Viz"),
+                         visNetworkOutput("vizNetwork_basic")
                          # , textOutput("region_clusters")
                 ),
                 tabPanel("Region Figures"
