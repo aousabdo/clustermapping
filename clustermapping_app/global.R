@@ -82,7 +82,7 @@ get_strong_clusters <- function(region_name = NULL
   
   if(length(strong_clusters) != 0){    
     if(verbose)invisible(cat("\tStrong clusters found\n"))
-    
+    is_strong_cluster <- TRUE
     # prepare strong-clusters data
     cluster_name <- sapply(strong_clusters, function(x) x$name)
     cluster_code <- sapply(strong_clusters, function(x) x$code)
@@ -107,21 +107,22 @@ get_strong_clusters <- function(region_name = NULL
     setkey(strong_clusters, cluster_pos)
   }else{
     if(verbose)invisible(cat("\tNo strong clusters found, returning all clusters\n"))
-    
+    is_strong_cluster <- FALSE
     # if there are no strong clusters for the selected region, then just 
     # return the region's clusters
-    region_clusters <<- get_region_clusters(cluster = "all"
-                                            , region_name = region_name
-                                            , region_type = selected_region_info[, region_type_t]
-                                            , regions_dt = regions_dt 
-                                            , year_selected = 2016
-                                            , cluster_selected = "all"
-                                            , meta_data_list = meta_data_list
-                                            , base_url = base_url
-                                            , verbose = verbose)
-    strong_clusters <- copy(region_clusters)
+    region_clusters <- get_region_clusters(cluster = "all"
+                                           , region_name = region_name
+                                           , region_type = selected_region_info[, region_type_t]
+                                           , regions_dt = regions_dt 
+                                           , year_selected = 2016
+                                           , cluster_selected = "all"
+                                           , meta_data_list = meta_data_list
+                                           , base_url = base_url
+                                           , verbose = verbose)
+    strong_clusters <- region_clusters_to_strong_clusters(region_clusters = region_clusters
+                                                          , meta_data_list = meta_data_list)
   }
-  return(strong_clusters)
+  return(list(strong_clusters = strong_clusters, is_strong_cluster = is_strong_cluster))
 }
 #========================================================================================#
 #================================ End: get_strong_clusters ==============================#

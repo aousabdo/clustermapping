@@ -8,10 +8,6 @@ source("./global.R")
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
   
-  output$text_1 <- renderText({ 
-    paste0("Strong Clusters in ", input$region_name, ", ", input$year)
-  })
-  
   strong_clusters_dt <- reactive({
     # call the function that gets the strong clusters for a given region and year
     get_strong_clusters(region_name = input$region_name
@@ -20,8 +16,17 @@ shinyServer(function(input, output) {
                         , meta_data_list = meta_data)
   })
   
+  output$text_1 <- renderText({ 
+    is_strong_cluster <- strong_clusters_dt()[["is_strong_cluster"]]
+    if(is_strong_cluster) {
+      paste0("Strong Clusters in ", input$region_name, ", ", input$year)
+    }else{
+      paste0("Clusters in ", input$region_name, ", ", input$year)
+    }
+  })
+  
   cluster_data <- reactive({
-    strong_clusters <- strong_clusters_dt()
+    strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
     
     # if the user hasn't yet selected a cluster, pick the first one
     if(is.null(input$strong_clusters_rows_selected)) strong_clusters_rows_selected <- 1
@@ -73,7 +78,7 @@ shinyServer(function(input, output) {
   output$sankeyNetwork_Viz <- renderSankeyNetwork({network_viz()$sankeyNetwork_viz})
   
   output$strong_clusters <- DT::renderDataTable(expr = {
-    strong_clusters <- strong_clusters_dt()
+    strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
     strong_clusters[, .(cluster_name)]
   }, server = FALSE, selection = 'single')
   
