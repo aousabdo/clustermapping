@@ -38,8 +38,8 @@ shinyServer(function(input, output) {
   })
   
   region_clusters <- reactive({
-    cluster_name <- cluster_data()$related_clusters_dt$parent_cluster_name %>% unique() %>% as.character()
-    region_type <- regions_dt[region_short_name_t == input$region_name, region_type_t]
+    cluster_name  <- cluster_data()$related_clusters_dt$parent_cluster_name %>% unique() %>% as.character()
+    region_type   <- regions_dt[region_short_name_t == input$region_name, region_type_t]
     region_clusters <- get_region_clusters(cluster = "all"
                                            , region_name = input$region_name
                                            , region_type = region_type
@@ -52,7 +52,6 @@ shinyServer(function(input, output) {
   
   cluster_plots <- reactive({
     region_clusters <- region_clusters()
-    foo3 <<- region_clusters
     build_cluster_plots(region_clusters_dt = region_clusters
                         , N_top_clusters = 100
                         , year_selected = 2016
@@ -70,19 +69,36 @@ shinyServer(function(input, output) {
     
   network_viz <- reactive({
     # call the function which builds the network visulizations
-    build_network_viz(cluster_data = cluster_data())
+    cluster_data <- cluster_data()
+
+    # don't return an error if there is no data in the related clusters table
+    if(nrow(cluster_data$related_clusters_dt) == 0) return(NULL)
+    build_network_viz(cluster_data = cluster_data)
   })
   
-  output$vizNetwork_basic <- renderVisNetwork({network_viz()$vizNetwork_basic}) 
-  output$forceNetwork_Viz <- renderForceNetwork({network_viz()$forceNetwork_viz})
-  output$sankeyNetwork_Viz <- renderSankeyNetwork({network_viz()$sankeyNetwork_viz})
+  output$vizNetwork_basic <- renderVisNetwork({
+    network_viz()$vizNetwork_basic
+    }) 
+  
+  output$forceNetwork_Viz <- renderForceNetwork({
+    network_viz()$forceNetwork_viz
+    })
+  
+  output$sankeyNetwork_Viz <- renderSankeyNetwork({
+    network_viz()$sankeyNetwork_viz
+    })
   
   output$strong_clusters <- DT::renderDataTable(expr = {
     strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
     strong_clusters[, .(cluster_name)]
   }, server = FALSE, selection = 'single')
   
-  output$related_clusters <- shiny::renderDataTable({cluster_data()$related_clusters_dt})
+  output$related_clusters <- shiny::renderDataTable({
+    foo33 <- cluster_data()$related_clusters_dt
+    print(dim(foo33))
+    req(foo33)
+    foo33
+    })
   
   output$sub_clusters <- shiny::renderDataTable({cluster_data()$sub_clusters_dt})
   
