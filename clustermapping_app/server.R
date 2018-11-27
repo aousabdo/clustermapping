@@ -94,10 +94,7 @@ shinyServer(function(input, output) {
   }, server = FALSE, selection = 'single')
   
   output$related_clusters <- shiny::renderDataTable({
-    foo33 <- cluster_data()$related_clusters_dt
-    print(dim(foo33))
-    req(foo33)
-    foo33
+    cluster_data()$related_clusters_dt
     })
   
   output$sub_clusters <- shiny::renderDataTable({cluster_data()$sub_clusters_dt})

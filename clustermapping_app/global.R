@@ -54,8 +54,8 @@ get_strong_clusters <- function(region_name = NULL
   if(regions_dt[region_short_name_t == region_name, .N] == 0) stop("\tRegion selected is not valid...\n")
   
   # filter the regions data.table for the selected region
-  selected_region_info <<- regions_dt[region_short_name_t == region_name
-                                      , .(region_type_t, region_code_t, name_t, region_short_name_t)]
+  selected_region_info <- regions_dt[region_short_name_t == region_name
+                                     , .(region_type_t, region_code_t, name_t, region_short_name_t)]
   
   # in some cases, the region_code is between 1 and 9, in this case
   # if we call the api with this integer we'll get an error since the 
@@ -101,7 +101,7 @@ get_strong_clusters <- function(region_name = NULL
     # strong_clusters[, cluster_name := factor(cluster_name)]
     strong_clusters[, cluster_key  := factor(cluster_key)]
     
-    strong_clusters <<- unique(strong_clusters)
+    strong_clusters <- unique(strong_clusters)
     
     # set data.table key
     setkey(strong_clusters, cluster_pos)
