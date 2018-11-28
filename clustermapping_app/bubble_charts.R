@@ -6,7 +6,7 @@ circle <- function(center, radius) {
   data.frame(x = center[1] + radius*cos(th), y = center[2] + radius*sin(th))
 }
 
-N <- 4
+N <- 10
 # example dataset
 df  <- data.table(cluster = paste("Cluster", LETTERS[1:N])
                   , start = 1000*(N:1)
@@ -67,3 +67,4 @@ if(add_inner_circles){
 print(p)
 
 gg <- ggplotly(p)
+print(gg)
