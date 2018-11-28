@@ -616,3 +616,82 @@ region_clusters_to_strong_clusters <- function(region_clusters = NULL
 #========================================================================================#
 #======================= End: region_clusters_to_strong_clusters ========================#
 #========================================================================================#
+
+#========================================================================================#
+#=================================== get_circle_coord ===================================#
+#========================================================================================#
+# function to calculate coords of a circle
+get_circle_coord <- function(center, radius, res = 1000) {
+  # we will calculate the coords of a circle using the parametric equations of a circle
+  # take a look at https://en.wikipedia.org/wiki/Circle#Equations
+  
+  # calcualte theta, the parametric angle
+  th <- seq(0, 2*pi, len = res)
+  
+  # coordinates of the circle
+  DT <- data.table(x = center[1] + radius*cos(th), y = center[2] + radius*sin(th))
+  return(DT)
+}
+#========================================================================================#
+#================================= End: get_circle_coord ================================#
+#========================================================================================#
+
+#========================================================================================#
+#================================ build_horiz_bubble_chart ==============================#
+#========================================================================================#
+build_horiz_bubble_chart <- function(data = NULL
+                                     , center_aligned = TRUE
+                                     , fill = "seagreen"
+                                     , scale_value = 0.4){
+  # make sure the data given is a data.table 
+  if(!is.data.table(data)){
+    tmp <- as.data.table(data)
+  }else{ tmp <- copy(data) }
+  
+  # check to make sure the data.table has the needed clumns
+  if(sum(c("cat_var", "value", "pos") %in% names(tmp), na.rm = TRUE) != 3) 
+    stop("\t I am expecting three columns with the following names: \"cat_var\", \"value\", \"pos\"")
+  
+  # order data by pos column
+  setkey(tmp, pos)
+  setorder(tmp, pos)
+  
+  # get maxiumum value
+  max       <- max(tmp$value)
+  
+  # get number of bubbles
+  n.bubbles <- nrow(tmp)
+  
+  # scale
+  scale_value     <- scale_value/sum(sqrt(tmp$value))
+  
+  # calculate scaled centers and radii of bubbles           
+  radii <- scale_value*sqrt(tmp$value)
+  ctr.x <- cumsum(c(radii[1], head(radii, -1) + tail(radii, -1) + .01))
+  
+  # starting (larger) bubbles
+  if(center_aligned){
+    gg.1   <- do.call(rbind, lapply(1:n.bubbles, function(i) cbind(group = i, circle(c(ctr.x[i], radii[1]), radii[i]))))
+    text.1 <- data.frame(x = ctr.x, y = radii[1], label = paste(tmp$cat_var, tmp$value, sep = "\n"))
+  }else{
+    gg.1   <- do.call(rbind, lapply(1:n.bubbles, function(i) cbind(group = i, circle(c(ctr.x[i], radii[i]), radii[i]))))
+    text.1 <- data.frame(x = ctr.x, y = radii, label = paste(tmp$cat_var, tmp$value, sep = "\n"))
+  }
+  
+  # make the plot
+  p <- ggplot() + geom_polygon(data = gg.1, aes(x, y, group = group), fill = fill) +
+    geom_path(data = gg.1, aes(x, y, group = group), color = fill) +
+    geom_text(data = text.1, aes(x, y, label = label), col = "white") +
+    labs(x = "", y = "") + scale_y_continuous(limits = c(-0.1, 2.5*scale*sqrt(max(tmp$value)))) +
+    coord_fixed() +
+    theme(axis.text = element_blank()
+          , axis.ticks = element_blank()
+          , panel.grid = element_blank()
+          , panel.background = element_blank())
+  
+  return(p)
+  
+}
+#========================================================================================#
+#============================= End: build_horiz_bubble_chart ============================#
+#========================================================================================#
