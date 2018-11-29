@@ -69,13 +69,13 @@ get_strong_clusters <- function(region_name = NULL
   
   if(verbose) invisible(cat("\tRunning the following query: ", query, "\n"))
   
-  selected_region <<- jsonlite::fromJSON(query)
+  selected_region_lst <- jsonlite::fromJSON(query)
   
   # in some cases, the region selected would have no strong clusters, in that case
   # we'll just return the region clusters
   
   # convert to data.table object
-  selected_region <- as.data.table(selected_region)
+  selected_region <- as.data.table(selected_region_lst)
   
   # get a list of strong clusters for selected region
   strong_clusters <- selected_region$strong_clusters
@@ -102,6 +102,17 @@ get_strong_clusters <- function(region_name = NULL
     strong_clusters[, cluster_key  := factor(cluster_key)]
     
     strong_clusters <- unique(strong_clusters)
+
+    # let's add the number of employments for strong cluster
+    strong_cluster_codes <- strong_clusters$cluster_code
+    
+    # the selected_region table has the employments for all clusters in the region
+    # get employments for the strong clusters
+    tmp <- selected_region_lst[grep("cluster_([1-9][0-9]{0,2})_emp_tl", names(selected_region_lst), value = TRUE)] %>% 
+      list2df(col1 = "emp_tl", "cluster_code") %>% as.data.table()
+    tmp[, cluster_code := as.integer(gsub("^cluster_|_emp_tl", "", cluster_code))]
+    
+    strong_clusters <- left_join(x = strong_clusters,y = tmp, by = "cluster_code") %>% as.data.table()
     
     # set data.table key
     setkey(strong_clusters, cluster_pos)
