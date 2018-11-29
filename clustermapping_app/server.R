@@ -90,7 +90,7 @@ shinyServer(function(input, output) {
   
   output$strong_clusters <- DT::renderDataTable(expr = {
     strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
-    strong_clusters[, .(cluster_name)]
+    strong_clusters[, .(cluster_name, emp_tl)]
   }, server = FALSE, selection = 'single')
   
   output$related_clusters <- shiny::renderDataTable({
