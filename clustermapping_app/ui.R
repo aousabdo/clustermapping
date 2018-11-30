@@ -20,12 +20,12 @@ shinyUI(fluidPage(
     ),
     
     # Show a plot of the generated distribution
-    mainPanel(h1(textOutput("text_1"))
-              , hr()
-              # , DT::dataTableOutput("strong_clusters")
-              , plotly::plotlyOutput("strong_clusters_plot", height = "700px"), 
-              tabsetPanel(
+    mainPanel(tabsetPanel(
                 tabPanel("Related Clusters",
+                         h1(textOutput("text_1"))
+                         , hr()
+                         # , DT::dataTableOutput("strong_clusters")
+                         , plotly::plotlyOutput("strong_clusters_plot", height = "700px"),
                          sankeyNetworkOutput("sankeyNetwork_Viz"),
                          visNetworkOutput("vizNetwork_basic")
                          # , textOutput("region_clusters")
