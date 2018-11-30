@@ -24,12 +24,13 @@ shinyUI(fluidPage(
                 tabPanel("Related Clusters",
                          h1(textOutput("text_1"))
                          , hr()
+                         , plotly::plotlyOutput("strong_clusters_plot", height = "700px")
+                         , plotly::plotlyOutput("combined_plots_1", height = "500px", width = "1400px")
                          # , DT::dataTableOutput("strong_clusters")
-                         #, plotly::plotlyOutput("strong_clusters_plot", height = "700px"),
-                         #sankeyNetworkOutput("sankeyNetwork_Viz"),
-                         # visNetworkOutput("vizNetwork_basic")
+                         , sankeyNetworkOutput("sankeyNetwork_Viz")
+                         , visNetworkOutput("vizNetwork_basic")
                          # , textOutput("region_clusters")
-                         , plotly::plotlyOutput("combined_plots_1", height = "1000px", width = "1400px")
+                        
                 ),
                 tabPanel("Region Figures"
                          #, plotly::plotlyOutput("donut_chart", width = "500px", height = "500px")

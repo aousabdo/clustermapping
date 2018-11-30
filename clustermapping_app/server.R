@@ -33,7 +33,7 @@ shinyServer(function(input, output) {
     else strong_clusters_rows_selected <- input$strong_clusters_rows_selected
     
     s <- event_data("plotly_click", source = "strong_clusters_barplot")
-
+    print(s)
     if(is.null(s)) strong_clusters_rows_selected <- 1
     else strong_clusters_rows_selected <- s$pointNumber + 1
     
@@ -72,8 +72,8 @@ shinyServer(function(input, output) {
   donut_chart <- reactive({cluster_plots()$donut_chart})
   
   output$cluster_emp <- plotly::renderPlotly({
-    s <- event_data("plotly_click", source = "barplot")
-    print(as.list(s))
+    # s <- event_data("plotly_click", source = "barplot")
+    # print(as.list(s))
     cluster_plots()$cluster_emp
     })
   
@@ -110,7 +110,6 @@ shinyServer(function(input, output) {
     strong_clusters[, .(cluster_name, emp_tl)]
   }, server = FALSE, selection = 'single')
   
-  # output$strong_clusters_plot <- plotly::renderPlotly({
   strong_clusters_plot <- reactive({
     strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
     
@@ -128,6 +127,9 @@ shinyServer(function(input, output) {
              , margin = list(l = 350, r = 50, b = 50, t = 50, pad = 4))
   })
   
+  output$strong_clusters_plot <- plotly::renderPlotly({
+    strong_clusters_plot()
+  })
   output$related_clusters <- shiny::renderDataTable({
     cluster_data()$related_clusters_dt
     })
@@ -137,8 +139,8 @@ shinyServer(function(input, output) {
   output$industries <- shiny::renderDataTable({cluster_data()$industries})
   
   output$combined_plots_1 <- plotly::renderPlotly({
-    p <- subplot(nrows = 2
-                 , strong_clusters_plot()
+    p <- subplot(nrows = 1
+                 # , strong_clusters_plot()
                  , subplot(donut_chart()
                            , cluster_emp()
                            , widths = c(0.6, 0.3)
