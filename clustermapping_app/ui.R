@@ -22,7 +22,8 @@ shinyUI(fluidPage(
     # Show a plot of the generated distribution
     mainPanel(h1(textOutput("text_1"))
               , hr()
-              , DT::dataTableOutput("strong_clusters"),
+              # , DT::dataTableOutput("strong_clusters")
+              , plotly::plotlyOutput("strong_clusters_plot", height = "700px"), 
               tabsetPanel(
                 tabPanel("Related Clusters",
                          sankeyNetworkOutput("sankeyNetwork_Viz"),
@@ -32,6 +33,7 @@ shinyUI(fluidPage(
                 tabPanel("Region Figures"
                          , plotly::plotlyOutput("donut_chart", width = "500px", height = "500px")
                          , plotly::plotlyOutput("cluster_emp", width = "1000px", height = "600px")
+                         # , verbatimTextOutput("selection")
                          , plotly::plotlyOutput("cluster_wages", width = "1000px", height = "600px")
                          , plotly::plotlyOutput("cluster_job_creation", width = "1000px", height = "1000px")
                          , DT::dataTableOutput("top_clusters")
@@ -41,8 +43,6 @@ shinyUI(fluidPage(
                          shiny::dataTableOutput("sub_clusters"),
                          shiny::dataTableOutput("industries")
                          # , forceNetworkOutput("forceNetwork_Viz")
-                )
-              )
-    )
+                )))
   )
 ))

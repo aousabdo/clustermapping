@@ -112,7 +112,7 @@ get_strong_clusters <- function(region_name = NULL
       list2df(col1 = "emp_tl", "cluster_code") %>% as.data.table()
     tmp[, cluster_code := as.integer(gsub("^cluster_|_emp_tl", "", cluster_code))]
     
-    strong_clusters <- left_join(x = strong_clusters,y = tmp, by = "cluster_code") %>% as.data.table()
+    strong_clusters <- left_join(x = strong_clusters, y = tmp, by = "cluster_code") %>% as.data.table()
     
     # set data.table key
     setkey(strong_clusters, cluster_pos)
@@ -537,7 +537,8 @@ build_cluster_plots <- function(region_clusters_dt = NULL
                 , x = ~ emp_tl
                 , y = ~reorder(cluster_name_t, emp_tl)
                 , type = 'bar'
-                , orientation = "h") %>%
+                , orientation = "h"
+                , source = "barplot") %>%
     layout(title = paste0("\nEmployment by Traded Cluster, ", year_selected),  
            xaxis = list(title = paste0("Employment, ", year_selected), showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
            yaxis = list(title = "",showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
@@ -675,6 +676,7 @@ build_horiz_bubble_chart <- function(data = NULL
   
   # scale
   scale_value     <- scale_value/sum(sqrt(tmp$value))
+  print(scale_value)
   
   # calculate scaled centers and radii of bubbles           
   radii <- scale_value*sqrt(tmp$value)
@@ -682,10 +684,10 @@ build_horiz_bubble_chart <- function(data = NULL
   
   # starting (larger) bubbles
   if(center_aligned){
-    gg.1   <- do.call(rbind, lapply(1:n.bubbles, function(i) cbind(group = i, circle(c(ctr.x[i], radii[1]), radii[i]))))
+    gg.1   <- do.call(rbind, lapply(1:n.bubbles, function(i) cbind(group = i, get_circle_coord(c(ctr.x[i], radii[1]), radii[i]))))
     text.1 <- data.frame(x = ctr.x, y = radii[1], label = paste(tmp$cat_var, tmp$value, sep = "\n"))
   }else{
-    gg.1   <- do.call(rbind, lapply(1:n.bubbles, function(i) cbind(group = i, circle(c(ctr.x[i], radii[i]), radii[i]))))
+    gg.1   <- do.call(rbind, lapply(1:n.bubbles, function(i) cbind(group = i, get_circle_coord(c(ctr.x[i], radii[i]), radii[i]))))
     text.1 <- data.frame(x = ctr.x, y = radii, label = paste(tmp$cat_var, tmp$value, sep = "\n"))
   }
   
@@ -693,7 +695,7 @@ build_horiz_bubble_chart <- function(data = NULL
   p <- ggplot() + geom_polygon(data = gg.1, aes(x, y, group = group), fill = fill) +
     geom_path(data = gg.1, aes(x, y, group = group), color = fill) +
     geom_text(data = text.1, aes(x, y, label = label), col = "white") +
-    labs(x = "", y = "") + scale_y_continuous(limits = c(-0.1, 2.5*scale*sqrt(max(tmp$value)))) +
+    labs(x = "", y = "") + scale_y_continuous(limits = c(-0.1, 2.5*scale_value*sqrt(max(tmp$value)))) +
     coord_fixed() +
     theme(axis.text = element_blank()
           , axis.ticks = element_blank()
