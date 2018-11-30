@@ -143,7 +143,6 @@ shinyServer(function(input, output) {
                  # , strong_clusters_plot()
                  , subplot(donut_chart()
                            , cluster_emp()
-                           , widths = c(0.6, 0.3)
-                           , titleX = TRUE))
+                           , widths = c(0.6, 0.3)))
   })
 })

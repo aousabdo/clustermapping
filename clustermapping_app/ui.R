@@ -24,8 +24,8 @@ shinyUI(fluidPage(
                 tabPanel("Related Clusters",
                          h1(textOutput("text_1"))
                          , hr()
-                         , plotly::plotlyOutput("strong_clusters_plot", height = "700px")
-                         , plotly::plotlyOutput("combined_plots_1", height = "500px", width = "1400px")
+                         , plotly::plotlyOutput("strong_clusters_plot", height = "auto")
+                         , plotly::plotlyOutput("combined_plots_1", height = "auto", width = "1400px")
                          # , DT::dataTableOutput("strong_clusters")
                          , sankeyNetworkOutput("sankeyNetwork_Viz")
                          , visNetworkOutput("vizNetwork_basic")
@@ -33,7 +33,7 @@ shinyUI(fluidPage(
                         
                 ),
                 tabPanel("Region Figures"
-                         #, plotly::plotlyOutput("donut_chart", width = "500px", height = "500px")
+                         # , plotly::plotlyOutput("donut_chart", width = "500px", height = "500px")
                          , plotly::plotlyOutput("cluster_emp", width = "1000px", height = "600px")
                          # , verbatimTextOutput("selection")
                          , plotly::plotlyOutput("cluster_wages", width = "1000px", height = "600px")
