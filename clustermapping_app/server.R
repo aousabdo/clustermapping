@@ -151,9 +151,11 @@ shinyServer(function(input, output) {
   
   output$combined_plots_1 <- plotly::renderPlotly({
     p <- subplot(nrows = 1
-                 # , strong_clusters_plot()
                  , subplot(donut_chart()
                            , cluster_emp()
                            , widths = c(0.6, 0.3)))
   })
+  #===================================================================================#
+  #================================== End: Outputs ===================================#
+  #===================================================================================#
 })
