@@ -5,9 +5,12 @@ rm(list = ls())
 
 source("./global.R")
 
-# Define server logic required to draw a histogram
 shinyServer(function(input, output) {
   
+  #===================================================================================#
+  #================================ Reactive Functions ===============================#
+  #===================================================================================#
+  # declare and build some reactive functions that we'll use later 
   strong_clusters_dt <- reactive({
     # call the function that gets the strong clusters for a given region and year
     get_strong_clusters(region_name = input$region_name
@@ -15,16 +18,7 @@ shinyServer(function(input, output) {
                         , year_selected = input$year
                         , meta_data_list = meta_data)
   })
-  
-  output$text_1 <- renderText({ 
-    is_strong_cluster <- strong_clusters_dt()[["is_strong_cluster"]]
-    if(is_strong_cluster) {
-      paste0("Strong Clusters in ", input$region_name, ", ", input$year)
-    }else{
-      paste0("Clusters in ", input$region_name, ", ", input$year)
-    }
-  })
-  
+
   cluster_data <- reactive({
     strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
     
@@ -40,7 +34,7 @@ shinyServer(function(input, output) {
     # call the function that gets the cluster data
     get_cluster_data(strong_clusters_dt = strong_clusters
                      , strong_clusters_rows_selected = strong_clusters_rows_selected)
-  })
+  })  
   
   region_clusters <- reactive({
     cluster_name  <- cluster_data()$related_clusters_dt$parent_cluster_name %>% unique() %>% as.character()
@@ -66,6 +60,51 @@ shinyServer(function(input, output) {
                         , meta_data_list = meta_data)
   })
   
+  cluster_emp <- reactive({
+    cluster_plots()$cluster_emp
+  })
+  
+  network_viz <- reactive({
+    # call the function which builds the network visulizations
+    cluster_data <- cluster_data()
+    
+    # don't return an error if there is no data in the related clusters table
+    if(nrow(cluster_data$related_clusters_dt) == 0) return(NULL)
+    build_network_viz(cluster_data = cluster_data)
+  })
+  
+  strong_clusters_plot <- reactive({
+    strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
+    
+    strong_clusters[, cluster_name_2 := paste0(cluster_name, ", Rank: ", cluster_pos)]
+    
+    plot_ly(data = strong_clusters 
+            , x = ~emp_tl
+            , y = ~reorder(cluster_name_2, -cluster_pos)
+            , type = 'bar'
+            , orientation = "h"
+            , source = "strong_clusters_barplot") %>%
+      layout(title = paste0("Strong Clusters in ", input$region_name, ", ", input$year)  
+             , xaxis = list(title = "Employment", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE)
+             , yaxis = list(title = "",showgrid = FALSE, zeroline = TRUE, showticklabels = TRUE)
+             , margin = list(l = 350, r = 50, b = 50, t = 50, pad = 4))
+  })
+  #===================================================================================#
+  #============================= End: Reactive Functions =============================#
+  #===================================================================================#
+  
+  #===================================================================================#
+  #===================================== Outputs =====================================#
+  #===================================================================================#
+  output$text_1 <- renderText({ 
+    is_strong_cluster <- strong_clusters_dt()[["is_strong_cluster"]]
+    if(is_strong_cluster) {
+      paste0("Strong Clusters in ", input$region_name, ", ", input$year)
+    }else{
+      paste0("Clusters in ", input$region_name, ", ", input$year)
+    }
+  })
+  
   output$top_clusters <- DT::renderDataTable(cluster_plots()$top_clusters)
   
   output$donut_chart <- plotly::renderPlotly(cluster_plots()$donut_chart)
@@ -77,21 +116,9 @@ shinyServer(function(input, output) {
     cluster_plots()$cluster_emp
     })
   
-  cluster_emp <- reactive({
-    cluster_plots()$cluster_emp
-  })
-  
   output$cluster_wages <- plotly::renderPlotly(cluster_plots()$cluster_wages)
   output$cluster_job_creation <- plotly::renderPlotly(cluster_plots()$cluster_job_creation)  
     
-  network_viz <- reactive({
-    # call the function which builds the network visulizations
-    cluster_data <- cluster_data()
-
-    # don't return an error if there is no data in the related clusters table
-    if(nrow(cluster_data$related_clusters_dt) == 0) return(NULL)
-    build_network_viz(cluster_data = cluster_data)
-  })
   
   output$vizNetwork_basic <- renderVisNetwork({
     network_viz()$vizNetwork_basic
@@ -110,22 +137,6 @@ shinyServer(function(input, output) {
     strong_clusters[, .(cluster_name, emp_tl)]
   }, server = FALSE, selection = 'single')
   
-  strong_clusters_plot <- reactive({
-    strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
-    
-    strong_clusters[, cluster_name := paste0(cluster_name, ", Rank: ", cluster_pos)]
-    
-    plot_ly(data = strong_clusters 
-            , x = ~emp_tl
-            , y = ~reorder(cluster_name, -cluster_pos)
-            , type = 'bar'
-            , orientation = "h"
-            , source = "strong_clusters_barplot") %>%
-      layout(title = paste0("Strong Clusters in ", input$region_name, ", ", input$year)  
-             , xaxis = list(title = "Employment", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE)
-             , yaxis = list(title = "",showgrid = FALSE, zeroline = TRUE, showticklabels = TRUE)
-             , margin = list(l = 350, r = 50, b = 50, t = 50, pad = 4))
-  })
   
   output$strong_clusters_plot <- plotly::renderPlotly({
     strong_clusters_plot()
