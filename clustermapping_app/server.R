@@ -58,7 +58,7 @@ shinyServer(function(input, output) {
   cluster_plots <- reactive({
     region_clusters <- region_clusters()
     build_cluster_plots(region_clusters_dt = region_clusters
-                        , N_top_clusters = 100
+                        , N_top_clusters = 10
                         , year_selected = 2016
                         , traded_only = F
                         , start_year = 1998
@@ -67,12 +67,20 @@ shinyServer(function(input, output) {
   })
   
   output$top_clusters <- DT::renderDataTable(cluster_plots()$top_clusters)
+  
   output$donut_chart <- plotly::renderPlotly(cluster_plots()$donut_chart)
+  donut_chart <- reactive({cluster_plots()$donut_chart})
+  
   output$cluster_emp <- plotly::renderPlotly({
     s <- event_data("plotly_click", source = "barplot")
     print(as.list(s))
     cluster_plots()$cluster_emp
     })
+  
+  cluster_emp <- reactive({
+    cluster_plots()$cluster_emp
+  })
+  
   output$cluster_wages <- plotly::renderPlotly(cluster_plots()$cluster_wages)
   output$cluster_job_creation <- plotly::renderPlotly(cluster_plots()$cluster_job_creation)  
     
@@ -102,7 +110,8 @@ shinyServer(function(input, output) {
     strong_clusters[, .(cluster_name, emp_tl)]
   }, server = FALSE, selection = 'single')
   
-  output$strong_clusters_plot <- plotly::renderPlotly({
+  # output$strong_clusters_plot <- plotly::renderPlotly({
+  strong_clusters_plot <- reactive({
     strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
     
     strong_clusters[, cluster_name := paste0(cluster_name, ", Rank: ", cluster_pos)]
@@ -127,13 +136,12 @@ shinyServer(function(input, output) {
   
   output$industries <- shiny::renderDataTable({cluster_data()$industries})
   
-  output$selection <- renderPrint({
-    s <- event_data("plotly_click", source = "barplot")
-    if (length(s) == 0) {
-      "Click on a cell in the heatmap to display a scatterplot"
-    } else {
-      cat("You selected: \n\n")
-      as.list(s)
-    }
+  output$combined_plots_1 <- plotly::renderPlotly({
+    p <- subplot(nrows = 2
+                 , strong_clusters_plot()
+                 , subplot(donut_chart()
+                           , cluster_emp()
+                           , widths = c(0.6, 0.3)
+                           , titleX = TRUE))
   })
 })

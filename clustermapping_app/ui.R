@@ -8,8 +8,8 @@ shinyUI(fluidPage(
   titlePanel("Cluster Mapping"),
   
   # Sidebar with a slider input for number of bins 
-  sidebarLayout(
-    sidebarPanel( 
+  sidebarLayout(fluid = TRUE, 
+    sidebarPanel(width= 2,
       selectInput(inputId = "region_name"
                   , label = "Select a Region"
                   , choices = region_names), 
@@ -25,13 +25,14 @@ shinyUI(fluidPage(
                          h1(textOutput("text_1"))
                          , hr()
                          # , DT::dataTableOutput("strong_clusters")
-                         , plotly::plotlyOutput("strong_clusters_plot", height = "700px"),
-                         sankeyNetworkOutput("sankeyNetwork_Viz"),
-                         visNetworkOutput("vizNetwork_basic")
+                         #, plotly::plotlyOutput("strong_clusters_plot", height = "700px"),
+                         #sankeyNetworkOutput("sankeyNetwork_Viz"),
+                         # visNetworkOutput("vizNetwork_basic")
                          # , textOutput("region_clusters")
+                         , plotly::plotlyOutput("combined_plots_1", height = "1000px", width = "1400px")
                 ),
                 tabPanel("Region Figures"
-                         , plotly::plotlyOutput("donut_chart", width = "500px", height = "500px")
+                         #, plotly::plotlyOutput("donut_chart", width = "500px", height = "500px")
                          , plotly::plotlyOutput("cluster_emp", width = "1000px", height = "600px")
                          # , verbatimTextOutput("selection")
                          , plotly::plotlyOutput("cluster_wages", width = "1000px", height = "600px")
