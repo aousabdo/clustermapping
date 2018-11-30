@@ -596,7 +596,9 @@ build_cluster_plots <- function(region_clusters_dt = NULL
 region_clusters_to_strong_clusters <- function(region_clusters = NULL
                                                , meta_data_list = meta_data){
   # convert a region_clusters table to a strong cluster table
-  # we'll just order the clusters by the number of employments
+  
+  # for the position of the clusters we'll just order the clusters by 
+  # the number of employments
   
   # copy the region cluster data to be the strong clusters object
   strong_clusters <- region_clusters
@@ -624,7 +626,7 @@ region_clusters_to_strong_clusters <- function(region_clusters = NULL
   strong_clusters[, cluster_pos := 1:.N]
   
   # only keep columns that we need
-  strong_clusters <- strong_clusters[, .(cluster_name, cluster_code, cluster_key, cluster_pos)]
+  strong_clusters <- strong_clusters[, .(cluster_name, cluster_code, cluster_key, cluster_pos, emp_tl)]
   
   return(strong_clusters)
 }
