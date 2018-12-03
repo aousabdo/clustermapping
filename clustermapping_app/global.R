@@ -735,17 +735,33 @@ add_short_names <- function(clusters_dt = NULL
   if(!is.data.table(clusters_dt)) tmp <- as.data.table(clusters_dt)
   else tmp <- copy(clusters_dt)
   
-  if(is.null(by_column)){
-    # check to make sure that we have some key values ot work with
-    # First let's check to see if the cluster_key column is given
-    if(sum(grepl("cluster_key", names(tmp))) == 0){
-      invisible(cat("\tNo cluster key column found\n"))
-    }else if(sum(grepl("cluster_code", names(tmp))) == 0){
-      invisible(cat("\tNo cluster code column found\n"))
-    }else{stop("\tNo appropriate column found to perform a merge...\n")}
-  }
+  if(is.null(by_column)) stop("\tI need a column name to merge by...")
+  if(sum(by_column %in% c("cluster_code", "cluster_key")) == 0) stop("\tby_column can be one of: \"cluster_code\" or \"cluster_key\" ")
   
   # first we will take the clusters_list and get a data.table out of it
+  # we will get the by_column plus the cluster_short_name columns
+  # cluster_name        <- sapply(clusters_list, function(x) x$name) %>% unname()
+  if(by_column == "cluster_code"){
+    by_column_tmp  <- sapply(clusters_list, function(x) x$cluster_code_t) %>% unname() %>% as.integer()
+  }else if(by_column == "cluster_key"){
+    by_column_tmp  <- sapply(clusters_list, function(x) x$key_t) %>% unname()
+  }
+  
+  cluster_short_name  <- sapply(clusters_list, function(x) x$short_name_t) %>% unname()
+  
+  # bind strong-cluster data in one data.table object
+  tmp2 <- cbind(by_column_tmp, cluster_short_name)
+  tmp2 <- as.data.table(tmp2)
+  
+  if(by_column == "cluster_code"){
+    tmp2[, by_column_tmp := as.integer(by_column_tmp)]
+  }
+  setnames(tmp2, c(by_column, "cluster_short_name"))
+
+  foo <<- copy(tmp)
+  foo2 <<- copy(tmp2)
+  # now we will perform the merge
+  tmp <- merge(tmp, tmp2, by = by_column)
   
 }
 #========================================================================================#
