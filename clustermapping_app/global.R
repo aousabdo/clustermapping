@@ -42,7 +42,8 @@ get_strong_clusters <- function(region_name = NULL
                                 , meta_data_list = meta_dta
                                 , base_url = "http://54.83.53.228/data"
                                 , verbose = TRUE
-                                , clusters_list = clusters_list){
+                                , clusters_list_input = clusters_list
+                                , by_column = "cluster_code"){
   # given a region name, a regions_dt, and a year, this function will return a 
   # data.table object with the strong clusters for that region
   
@@ -137,6 +138,12 @@ get_strong_clusters <- function(region_name = NULL
     strong_clusters <- region_clusters_to_strong_clusters(region_clusters = region_clusters
                                                           , meta_data_list = meta_data_list)
   }
+  
+  # add short_names to clusters
+  strong_clusters <- add_short_names(clusters_dt = strong_clusters
+                                     , clusters_list_input = clusters_list_input
+                                     , by_column = by_column)
+  
   return(list(strong_clusters = strong_clusters, is_strong_cluster = is_strong_cluster))
 }
 #========================================================================================#
@@ -148,7 +155,7 @@ get_strong_clusters <- function(region_name = NULL
 #========================================================================================#
 get_cluster_data <- function(strong_clusters_dt = NULL
                              , strong_clusters_rows_selected = NULL
-                             , cluster_list = clusters_list){
+                             , clusters_list_input = clusters_list){
   # this function will query the cluster list and cluster data.table
   # for cluster data given a selected cluster
   
@@ -156,7 +163,7 @@ get_cluster_data <- function(strong_clusters_dt = NULL
   selected_cluster <- strong_clusters_dt[strong_clusters_rows_selected]
   
   # now we query the cluster list data for the cluster selected by the user
-  selected_cluster_data <- clusters_list[[selected_cluster$cluster_key]] 
+  selected_cluster_data <- clusters_list_input[[selected_cluster$cluster_key]] 
   
   # let's get the number of sub_clusters as well as the number of related_clusters
   # to the selected cluster by the user
@@ -728,7 +735,7 @@ build_horiz_bubble_chart <- function(data = NULL
 #==================================== add_short_names ===================================#
 #========================================================================================#
 add_short_names <- function(clusters_dt = NULL
-                            , clusters_list = clusters_list
+                            , clusters_list_input = clusters_list
                             , by_column = "cluster_code"){
   # this function takes a data.table which contains some clusters and adds the 
   # short name of these clusters
@@ -740,14 +747,14 @@ add_short_names <- function(clusters_dt = NULL
   
   # first we will take the clusters_list and get a data.table out of it
   # we will get the by_column plus the cluster_short_name columns
-  # cluster_name        <- sapply(clusters_list, function(x) x$name) %>% unname()
+
   if(by_column == "cluster_code"){
-    by_column_tmp  <- sapply(clusters_list, function(x) x$cluster_code_t) %>% unname() %>% as.integer()
+    by_column_tmp  <- sapply(clusters_list_input, function(x) x$cluster_code_t) %>% unname() %>% as.integer()
   }else if(by_column == "cluster_key"){
-    by_column_tmp  <- sapply(clusters_list, function(x) x$key_t) %>% unname()
+    by_column_tmp  <- sapply(clusters_list_input, function(x) x$key_t) %>% unname()
   }
   
-  cluster_short_name  <- sapply(clusters_list, function(x) x$short_name_t) %>% unname()
+  cluster_short_name  <- sapply(clusters_list_input, function(x) x$short_name_t) %>% unname()
   
   # bind strong-cluster data in one data.table object
   tmp2 <- cbind(by_column_tmp, cluster_short_name)
@@ -758,8 +765,6 @@ add_short_names <- function(clusters_dt = NULL
   }
   setnames(tmp2, c(by_column, "cluster_short_name"))
 
-  foo <<- copy(tmp)
-  foo2 <<- copy(tmp2)
   # now we will perform the merge
   tmp <- merge(tmp, tmp2, by = by_column)
   
