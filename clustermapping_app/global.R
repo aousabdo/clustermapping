@@ -30,7 +30,7 @@ regions_dt <- regions_data$regions_dt
 # get a list of regoins available, exclude the three countries, the us, mexico and canada
 region_names <- regions_dt[region_type_t != "country", unique(region_short_name_t)]
 
-clusters_list   <- clusters_data$clusters_list
+clusters_list  <- clusters_data$clusters_list
 clusters_avlbl <- clusters_data$clusters_avlbl
 
 #========================================================================================#
@@ -41,7 +41,8 @@ get_strong_clusters <- function(region_name = NULL
                                 , year_selected = 2016
                                 , meta_data_list = meta_dta
                                 , base_url = "http://54.83.53.228/data"
-                                , verbose = TRUE){
+                                , verbose = TRUE
+                                , clusters_list = clusters_list){
   # given a region name, a regions_dt, and a year, this function will return a 
   # data.table object with the strong clusters for that region
   
@@ -67,7 +68,10 @@ get_strong_clusters <- function(region_name = NULL
   query <- paste(base_url, "region", selected_region_info[, region_type_t]
                  , region_code, year_selected, sep = "/")
   
-  if(verbose) invisible(cat("\tRunning the following query: ", query, "\n"))
+  if(verbose){
+    invisible(cat("\tGetting Strong Clusters...\n"))
+    invisible(cat("\tRunning the following query: ", query, "\n"))
+  }
   
   selected_region_lst <- jsonlite::fromJSON(query)
   
@@ -102,7 +106,7 @@ get_strong_clusters <- function(region_name = NULL
     strong_clusters[, cluster_key  := factor(cluster_key)]
     
     strong_clusters <- unique(strong_clusters)
-
+    
     # let's add the number of employments for strong cluster
     strong_cluster_codes <- strong_clusters$cluster_code
     
@@ -143,7 +147,8 @@ get_strong_clusters <- function(region_name = NULL
 #===================================== get_cluster_data =================================#
 #========================================================================================#
 get_cluster_data <- function(strong_clusters_dt = NULL
-                             , strong_clusters_rows_selected = NULL){
+                             , strong_clusters_rows_selected = NULL
+                             , cluster_list = clusters_list){
   # this function will query the cluster list and cluster data.table
   # for cluster data given a selected cluster
   
@@ -205,7 +210,9 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     # rearrange column orders to have the parent cluster as the first column
     setcolorder(related_clusters_dt, c(ncol(related_clusters_dt), 2, 1, 3:(ncol(related_clusters_dt)-1)))
     
-    related_clusters_dt <<- related_clusters_dt[, .(parent_cluster_name, cluster_name_t, related_percentage)]
+    # related_clusters_dt_out <<- related_clusters_dt[, .(parent_cluster_name, cluster_name_t, related_percentage)]
+    related_clusters_dt_out <<- related_clusters_dt
+    
   } else{
     invisible(cat("\tThe cluster", selected_cluster_name, "has no related clusters\n"))
     related_clusters_dt <- data.table()
@@ -473,11 +480,14 @@ get_region_clusters <- function(cluster = NULL
   query <- paste(base_url, "cluster", selected_cluster_code
                  , year_selected, selected_region[, region_type_t], region_code, sep = "/")
   
-  if(verbose) invisible(cat("\tRunning the following query: ", query, "\n"))
+  if(verbose){
+    invisible(cat("\n\tGetting Region Clusters, this includes related clusters, subclusters etc.\n"))
+    invisible(cat("\tRunning the following query: ", query, "\n"))
+  }
+  
   region_cluster_dt <- jsonlite::fromJSON(query, simplifyVector = TRUE)
   region_cluster_dt <- as.data.table(region_cluster_dt)
   
-  foo2 <<- copy(region_cluster_dt)
   # some final data transformations
   region_cluster_dt[, year_t := as.integer(year_t)]
   region_cluster_dt[, cluster_code_t := as.integer(cluster_code_t)]
@@ -713,3 +723,32 @@ build_horiz_bubble_chart <- function(data = NULL
 #========================================================================================#
 #============================= End: build_horiz_bubble_chart ============================#
 #========================================================================================#
+
+#========================================================================================#
+#==================================== add_short_names ===================================#
+#========================================================================================#
+add_short_names <- function(clusters_dt = NULL
+                            , clusters_list = clusters_list
+                            , by_column = "cluster_code"){
+  # this function takes a data.table which contains some clusters and adds the 
+  # short name of these clusters
+  if(!is.data.table(clusters_dt)) tmp <- as.data.table(clusters_dt)
+  else tmp <- copy(clusters_dt)
+  
+  if(is.null(by_column)){
+    # check to make sure that we have some key values ot work with
+    # First let's check to see if the cluster_key column is given
+    if(sum(grepl("cluster_key", names(tmp))) == 0){
+      invisible(cat("\tNo cluster key column found\n"))
+    }else if(sum(grepl("cluster_code", names(tmp))) == 0){
+      invisible(cat("\tNo cluster code column found\n"))
+    }else{stop("\tNo appropriate column found to perform a merge...\n")}
+  }
+  
+  # first we will take the clusters_list and get a data.table out of it
+  
+}
+#========================================================================================#
+#================================= End: add_short_names =================================#
+#========================================================================================#
+
