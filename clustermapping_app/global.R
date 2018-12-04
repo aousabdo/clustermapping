@@ -517,7 +517,8 @@ build_cluster_plots <- function(region_clusters_dt = NULL
                                 , traded_only = TRUE
                                 , start_year = 1998
                                 , end_year   = 2016
-                                , meta_data_list = meta_data){
+                                , meta_data_list = meta_data
+                                , use_short_names = TRUE){
   
   # chech the years given
   if(!(year_selected %in% meta_data_list[["years_avlbl"]])) stop("\tYear selected is out of range...\n")
@@ -552,9 +553,12 @@ build_cluster_plots <- function(region_clusters_dt = NULL
   
   p1 <- hide_legend(p1)
   
+  col_to_plot <- "cluster_name_t"
+  if(use_short_names) col_to_plot <- "cluster_short_name"
+  
   p2 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE][1:N_top_clusters, ] 
                 , x = ~emp_tl
-                , y = ~reorder(cluster_name_t, emp_tl)
+                , y = ~reorder(get(col_to_plot), emp_tl)
                 , type = 'bar'
                 , orientation = "h"
                 , source = "barplot") %>%
@@ -566,7 +570,7 @@ build_cluster_plots <- function(region_clusters_dt = NULL
   
   p3 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE] 
                 , x = ~ private_wage_tf
-                , y = ~reorder(cluster_name_t, private_wage_tf)
+                , y = ~reorder(get(col_to_plot), private_wage_tf)
                 , type = 'bar'
                 , orientation = "h") %>%
     layout(title = paste0("\nWages by Traded Cluster, ", year_selected),  
@@ -576,16 +580,16 @@ build_cluster_plots <- function(region_clusters_dt = NULL
   
   # get job creation by cluster by year
   job_creation <- region_clusters_dt[(year_t == start_year | year_t == end_year) & traded_b] %>%   
-    group_by(cluster_name_t) %>%
+    group_by_at(col_to_plot) %>%
     summarise(job_creation_numbers = emp_tl[year_t == end_year] - emp_tl[year_t == start_year]) %>%
     arrange(desc(job_creation_numbers)) %>%
     mutate(change = ifelse(job_creation_numbers >= 0, "Increased", "Decreased"))
-  
+
   p4 <- job_creation %>% 
-    ggplot(aes(x = reorder(cluster_name_t, -job_creation_numbers)
+    ggplot(aes(x = reorder(get(col_to_plot), -job_creation_numbers)
                , y = job_creation_numbers
                , fill = change
-               , text = paste0(cluster_name_t, "\nJob Creation:", job_creation_numbers))) 
+               , text = paste0(get(col_to_plot), "\nJob Creation:", job_creation_numbers))) 
   
   p4 <- p4 + geom_bar(stat = "identity") + scale_fill_manual(values=c("red", "blue")) +
     theme_minimal() + theme(legend.position="none", axis.text.x = element_text(angle = 80, hjust = 1)) + 
@@ -766,10 +770,14 @@ add_short_names <- function(clusters_dt = NULL
   setnames(tmp2, c(by_column, "cluster_short_name"))
 
   # now we will perform the merge
-  tmp <- merge(tmp, tmp2, by = by_column)
-  
+  error_catch <- try(tmp <- merge(tmp, tmp2, by = by_column), TRUE)
+  if(class(error_catch) == "try-error"){
+    cat("Caught an error in the column names. will try adding a \"_t\" to column names.\n")
+    try(tmp <- merge(tmp, tmp2, by.x = paste0(by_column, "_t"), by.y = by_column, TRUE))
+  }
+    
+  return(tmp)
 }
 #========================================================================================#
 #================================= End: add_short_names =================================#
 #========================================================================================#
-

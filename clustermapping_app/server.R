@@ -21,13 +21,13 @@ shinyServer(function(input, output) {
 
   cluster_data <- reactive({
     strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
-    
+
     # if the user hasn't yet selected a cluster, pick the first one
     if(is.null(input$strong_clusters_rows_selected)) strong_clusters_rows_selected <- 1
     else strong_clusters_rows_selected <- input$strong_clusters_rows_selected
     
     s <- event_data("plotly_click", source = "strong_clusters_barplot")
-    print(s)
+
     if(is.null(s)) strong_clusters_rows_selected <- 1
     else strong_clusters_rows_selected <- s$pointNumber + 1
     
@@ -52,13 +52,20 @@ shinyServer(function(input, output) {
   
   cluster_plots <- reactive({
     region_clusters <- region_clusters()
+    
+    # add short names
+    region_clusters <- add_short_names(clusters_dt = region_clusters
+                                       , clusters_list_input = clusters_list
+                                       , by_column = "cluster_code")
+    
     build_cluster_plots(region_clusters_dt = region_clusters
                         , N_top_clusters = 10
                         , year_selected = 2016
                         , traded_only = F
                         , start_year = 1998
                         , end_year = 2016
-                        , meta_data_list = meta_data)
+                        , meta_data_list = meta_data
+                        , use_short_names = TRUE)
   })
   
   cluster_emp <- reactive({
@@ -77,7 +84,9 @@ shinyServer(function(input, output) {
   strong_clusters_plot <- reactive({
     strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
     
-    strong_clusters[, cluster_name_2 := paste0(cluster_name, ", Rank: ", cluster_pos)]
+    # strong_clusters[, cluster_name_2 := paste0(cluster_name, ", Rank: ", cluster_pos)]
+    # It is better to use the short names since it will help us with the real-estate on the plots
+    strong_clusters[, cluster_name_2 := paste0(cluster_short_name, ", Rank: ", cluster_pos)]
     
     plot_ly(data = strong_clusters 
             , x = ~emp_tl
