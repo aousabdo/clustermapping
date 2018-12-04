@@ -1,8 +1,11 @@
 library(shiny)
 library(DT)
 
+# start with a clean slate as always
 rm(list = ls())
 
+# most of the heavy lifting is in the global.R file, source that to get access to all the 
+# functions in that file
 source("./global.R")
 
 shinyServer(function(input, output) {
