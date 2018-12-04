@@ -18,16 +18,16 @@ shinyServer(function(input, output) {
                         , year_selected = input$year
                         , meta_data_list = meta_data)
   })
-
+  
   cluster_data <- reactive({
     strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
-
+    
     # if the user hasn't yet selected a cluster, pick the first one
     if(is.null(input$strong_clusters_rows_selected)) strong_clusters_rows_selected <- 1
     else strong_clusters_rows_selected <- input$strong_clusters_rows_selected
     
     s <- event_data("plotly_click", source = "strong_clusters_barplot")
-
+    
     if(is.null(s)) strong_clusters_rows_selected <- 1
     else strong_clusters_rows_selected <- s$pointNumber + 1
     
@@ -124,23 +124,23 @@ shinyServer(function(input, output) {
     # s <- event_data("plotly_click", source = "barplot")
     # print(as.list(s))
     cluster_plots()$cluster_emp
-    })
+  })
   
   output$cluster_wages <- plotly::renderPlotly(cluster_plots()$cluster_wages)
   output$cluster_job_creation <- plotly::renderPlotly(cluster_plots()$cluster_job_creation)  
-    
+  
   
   output$vizNetwork_basic <- renderVisNetwork({
     network_viz()$vizNetwork_basic
-    }) 
+  }) 
   
   output$forceNetwork_Viz <- renderForceNetwork({
     network_viz()$forceNetwork_viz
-    })
+  })
   
   output$sankeyNetwork_Viz <- renderSankeyNetwork({
     network_viz()$sankeyNetwork_viz
-    })
+  })
   
   output$strong_clusters <- DT::renderDataTable(expr = {
     strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
@@ -153,17 +153,17 @@ shinyServer(function(input, output) {
   })
   output$related_clusters <- shiny::renderDataTable({
     cluster_data()$related_clusters_dt
-    })
+  })
   
   output$sub_clusters <- shiny::renderDataTable({cluster_data()$sub_clusters_dt})
   
   output$industries <- shiny::renderDataTable({cluster_data()$industries})
   
   output$combined_plots_1 <- plotly::renderPlotly({
-    p <- subplot(nrows = 1
-                 , subplot(donut_chart()
-                           , cluster_emp()
-                           , widths = c(0.6, 0.3)))
+    p <- plotly::subplot(nrows = 1
+                         , plotly::subplot(donut_chart()
+                                           , cluster_emp()
+                                           , widths = c(0.6, 0.3)))
   })
   #===================================================================================#
   #================================== End: Outputs ===================================#
