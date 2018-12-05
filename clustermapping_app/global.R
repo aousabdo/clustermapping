@@ -163,7 +163,8 @@ get_cluster_data <- function(strong_clusters_dt = NULL
   selected_cluster <- strong_clusters_dt[strong_clusters_rows_selected]
   
   # now we query the cluster list data for the cluster selected by the user
-  selected_cluster_data <- clusters_list_input[[selected_cluster$cluster_key]] 
+  selected_cluster_key <- selected_cluster$cluster_key %>% as.character()
+  selected_cluster_data <- clusters_list_input[[selected_cluster_key]] 
   
   # let's get the number of sub_clusters as well as the number of related_clusters
   # to the selected cluster by the user
@@ -290,7 +291,7 @@ build_network_viz <- function(cluster_data = NULL){
   # since the function we are using requires the links and nodes to start at 0 we have to 
   # make sure we do that
   nodes_d3 <- mutate(nodes, id = id - 1)
-  
+   
   edges <- data.table(from = 1
                       , to = nodes_d3$id
                       , weight = c(0, scale_fun(related_clusters$related_avg)))

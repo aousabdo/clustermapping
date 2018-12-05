@@ -24,6 +24,7 @@ shinyServer(function(input, output) {
   
   cluster_data <- reactive({
     strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
+    strong_clusters_out <<- copy(strong_clusters)
     
     # if the user hasn't yet selected a cluster, pick the first one
     if(is.null(input$strong_clusters_rows_selected)) strong_clusters_rows_selected <- 1
@@ -41,6 +42,7 @@ shinyServer(function(input, output) {
   })  
   
   region_clusters <- reactive({
+    foo <<- cluster_data()
     cluster_name  <- cluster_data()$related_clusters_dt$parent_cluster_name %>% unique() %>% as.character()
     region_type   <- regions_dt[region_short_name_t == input$region_name, region_type_t]
     region_clusters <- get_region_clusters(cluster = "all"
@@ -79,6 +81,7 @@ shinyServer(function(input, output) {
     # call the function which builds the network visulizations
     cluster_data <- cluster_data()
     
+    cluster_data_out <<- copy(cluster_data)
     # don't return an error if there is no data in the related clusters table
     if(nrow(cluster_data$related_clusters_dt) == 0) return(NULL)
     build_network_viz(cluster_data = cluster_data)
