@@ -801,3 +801,53 @@ add_short_names <- function(clusters_dt = NULL
 #========================================================================================#
 #================================= End: add_short_names =================================#
 #========================================================================================#
+
+#========================================================================================#
+#=============================== get_all_related_clusters ===============================#
+#========================================================================================#
+get_all_related_clusters <- function(clusters_list_input = clusters_list){
+  # get a list that only contains all of the related clusters
+  all_related_clusters <- sapply(clusters_list_input, function(x) x$related_clusters)
+  
+  related_clusters_names <- character()
+  # 
+  # for(i in 1:length(all_related_clusters)){
+  #   tmp <- sapply(all_related_clusters[[i]], function(x) x$cluster_name_t) %>% unname()
+  #   if(length(tmp) > 0){
+  #     related_clusters_names <- c(related_clusters_names, tmp)
+  #     names(all_related_clusters[[i]]) <- tmp
+  #   }else{
+  #     tmp <- "no_related_clusters"
+  #     related_clusters_names <- c(related_clusters_names, tmp)
+  #   }
+  # }
+  # 
+  # declare an empty data.table to hold the related clusters data
+  tmpdt <- data.table()
+  
+  # loop over the nested lists
+  for(i in 1:length(all_related_clusters)){
+    k <- length(all_related_clusters[[i]])
+    if(k > 0){
+      for(j in 1:k){
+        tmp <- all_related_clusters[[i]][[j]] %>% as.data.table()
+        tmp[, parent_cluster_name := names(all_related_clusters)[i]]
+        tmpdt <- rbind(tmpdt, tmp)
+      }
+    }
+  }
+  
+  setcolorder(tmpdt, c(length(tmpdt), 1:(length(tmpdt)-1)))
+  
+  # this will resulte in all columns be factors, let's fix that
+  integer_cols <- c("cluster_code_t", "related_90", "related_i20_90", "related_i20_90_min", "related_percentage")
+  numeric_cols <- c("related_avg", "related_min")
+  
+  tmpdt[, (integer_cols) := lapply(.SD, as.integer), .SDcols = integer_cols]
+  tmpdt[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
+  
+  return(tmpdt)
+}
+#========================================================================================#
+#============================= End: get_all_related_clusters ============================#
+#========================================================================================#
