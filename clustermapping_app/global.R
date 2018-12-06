@@ -156,7 +156,8 @@ get_strong_clusters <- function(region_name = NULL
 get_cluster_data <- function(strong_clusters_dt = NULL
                              , strong_clusters_rows_selected = NULL
                              , clusters_list_input = clusters_list
-                             , verbose = FALSE){
+                             , verbose = FALSE
+                             , clean_related_clusters = FALSE){
   # this function will query the cluster list and cluster data.table
   # for cluster data given a selected cluster
   
@@ -212,9 +213,10 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     related_clusters_dt[, (integer_cols) := lapply(.SD, function(x) as.integer(levels(x))[x]), .SDcols = integer_cols]
     related_clusters_dt[, (numeric_cols) := lapply(.SD, function(x) as.numeric(levels(x))[x]), .SDcols = numeric_cols]
     
-    # we will only keep tightly related clusters, those for which related_i20_90_min == 1
-    related_clusters_dt <- related_clusters_dt[related_i20_90_min == 1]
-
+    if(clean_related_clusters){
+      # we will only keep tightly related clusters, those for which related_i20_90_min == 1
+      related_clusters_dt <- related_clusters_dt[related_i20_90_min == 1]
+    }
     # # do some data cleaning etc. 
     # # list of numerical columns
     # numeric_cols <- c("cluster_code_t", grep("related", names(related_clusters_dt), v = TRUE))
@@ -233,7 +235,7 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     
     # rearrange column orders to have the parent cluster as the first column
     setcolorder(related_clusters_dt, c(ncol(related_clusters_dt), 2, 1, 3:(ncol(related_clusters_dt)-1)))
-
+    
     related_clusters_dt_out <<- copy(related_clusters_dt)
     
     # related_clusters_dt_out <<- related_clusters_dt[, .(parent_cluster_name, cluster_name_t, related_percentage)]
@@ -307,7 +309,7 @@ build_network_viz <- function(cluster_data = NULL){
   # since the function we are using requires the links and nodes to start at 0 we have to 
   # make sure we do that
   nodes_d3 <- mutate(nodes, id = id - 1)
-   
+  
   edges <- data.table(from = 1
                       , to = nodes_d3$id
                       , weight = c(0, scale_fun(related_clusters$related_avg)))
@@ -602,7 +604,7 @@ build_cluster_plots <- function(region_clusters_dt = NULL
     summarise(job_creation_numbers = emp_tl[year_t == end_year] - emp_tl[year_t == start_year]) %>%
     arrange(desc(job_creation_numbers)) %>%
     mutate(change = ifelse(job_creation_numbers >= 0, "Increased", "Decreased"))
-
+  
   p4 <- job_creation %>% 
     ggplot(aes(x = reorder(get(col_to_plot), -job_creation_numbers)
                , y = job_creation_numbers
@@ -769,7 +771,7 @@ add_short_names <- function(clusters_dt = NULL
   
   # first we will take the clusters_list and get a data.table out of it
   # we will get the by_column plus the cluster_short_name columns
-
+  
   if(by_column == "cluster_code"){
     by_column_tmp  <- sapply(clusters_list_input, function(x) x$cluster_code_t) %>% unname() %>% as.integer()
   }else if(by_column == "cluster_key"){
@@ -786,14 +788,14 @@ add_short_names <- function(clusters_dt = NULL
     tmp2[, by_column_tmp := as.integer(by_column_tmp)]
   }
   setnames(tmp2, c(by_column, "cluster_short_name"))
-
+  
   # now we will perform the merge
   error_catch <- try(tmp <- merge(tmp, tmp2, by = by_column), TRUE)
   if(class(error_catch) == "try-error"){
     cat("Caught an error in the column names. will try adding a \"_t\" to column names.\n")
     try(tmp <- merge(tmp, tmp2, by.x = paste0(by_column, "_t"), by.y = by_column, TRUE))
   }
-    
+  
   return(tmp)
 }
 #========================================================================================#
