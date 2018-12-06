@@ -16,6 +16,9 @@ net <- graph.data.frame(df_edges, directed = T)
 cluster_data_out$related_clusters_dt[, .(parent_cluster_name, cluster_name_t, related_avg)] %>% graph.data.frame() -> net
 
 
+all_related_clusters <- get_all_related_clusters(clusters_list_input = clusters_list)
+all_related_clusters[, .(parent_cluster_name, cluster_name_t, related_avg)] %>% graph.data.frame() -> net
+
 V(net)$degree <- centralization.degree(net)$res
 df_net <- ggnetwork(net, layout = "fruchtermanreingold", weights="related_avg", niter=5000)
 # df_net <- ggnetwork(net, layout = "fruchtermanreingold", weights="weight", niter=5000)
