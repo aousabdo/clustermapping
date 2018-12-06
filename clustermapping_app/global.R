@@ -155,7 +155,8 @@ get_strong_clusters <- function(region_name = NULL
 #========================================================================================#
 get_cluster_data <- function(strong_clusters_dt = NULL
                              , strong_clusters_rows_selected = NULL
-                             , clusters_list_input = clusters_list){
+                             , clusters_list_input = clusters_list
+                             , verbose = FALSE){
   # this function will query the cluster list and cluster data.table
   # for cluster data given a selected cluster
   
@@ -163,7 +164,9 @@ get_cluster_data <- function(strong_clusters_dt = NULL
   selected_cluster <- strong_clusters_dt[strong_clusters_rows_selected]
   
   # now we query the cluster list data for the cluster selected by the user
-  selected_cluster_key <- selected_cluster$cluster_key %>% as.character()
+  selected_cluster_key <- selected_cluster$cluster_key %>% as.character() 
+  # The as.character is crucial, otherwise we'll get the wrong related clusters
+  
   selected_cluster_data <- clusters_list_input[[selected_cluster_key]] 
   
   # let's get the number of sub_clusters as well as the number of related_clusters
@@ -172,8 +175,9 @@ get_cluster_data <- function(strong_clusters_dt = NULL
   N_rel_clusters <- selected_cluster_data$related_clusters %>% length()
   
   selected_cluster_name <- selected_cluster[, cluster_name] %>% as.character()
+  
   if(N_sub_clusters > 0){
-    invisible(cat("\tThe cluster", selected_cluster_name, "has", N_sub_clusters, "subclusters\n"))
+    if(verbose) invisible(cat("\tThe cluster", selected_cluster_name, "has", N_sub_clusters, "subclusters\n"))
     
     sub_clusters_dt <- selected_cluster_data$sub_clusters 
     sub_clusters_dt <- do.call(rbind, sub_clusters_dt) %>% as.data.table()
@@ -186,43 +190,55 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     setnames(sub_clusters_dt, c("parent_cluster_name", "sub_cluster_name"))
     
   } else{
-    invisible(cat("\tThe cluster", selected_cluster_name, "has no subclusters\n"))  
+    if(verbose) invisible(cat("\tThe cluster", selected_cluster_name, "has no subclusters\n"))  
     sub_clusters_dt <- data.table()
   }
   
   if(N_rel_clusters > 0){ 
-    invisible(cat("\tThe cluster", selected_cluster_name, "has", N_rel_clusters, "related clusters\n"))
+    if(verbose) invisible(cat("\tThe cluster", selected_cluster_name, "has", N_rel_clusters, "related clusters\n"))
     
     # let's get the data for the related clusters
     related_clusters <- selected_cluster_data$related_clusters
+    related_clusters_out <<- related_clusters
     
     # convert it to a data.table
-    do.call(rbind, related_clusters) %>% as.data.table() -> related_clusters_dt
+    related_clusters_dt <- do.call(rbind.data.frame, related_clusters) %>% as.data.table()
     
-    # do some data cleaning etc. 
-    # list of numerical columns
-    numeric_cols <- c("cluster_code_t", grep("related", names(related_clusters_dt), v = TRUE))
+    # this will resulte in all columns be factors, let's fix that
+    integer_cols <- c("cluster_code_t", "related_90", "related_i20_90", "related_i20_90_min", "related_percentage")
+    numeric_cols <- c("related_avg", "related_min")
     
-    # convert all columns from lists to characters
-    related_clusters_dt[, names(related_clusters_dt) := lapply(.SD, as.character)]
+    related_clusters_dt[, cluster_name_t := as.character(cluster_name_t)]
+    related_clusters_dt[, (integer_cols) := lapply(.SD, function(x) as.integer(levels(x))[x]), .SDcols = integer_cols]
+    related_clusters_dt[, (numeric_cols) := lapply(.SD, function(x) as.numeric(levels(x))[x]), .SDcols = numeric_cols]
     
-    # convert the only character column to factor
-    # related_clusters_dt[, cluster_name_t := factor(cluster_name_t)]
-    
-    # now convert all numerical cols to numeric
-    related_clusters_dt[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
+    # we will only keep tightly related clusters, those for which related_i20_90_min == 1
+    related_clusters_dt <- related_clusters_dt[related_i20_90_min == 1]
+
+    # # do some data cleaning etc. 
+    # # list of numerical columns
+    # numeric_cols <- c("cluster_code_t", grep("related", names(related_clusters_dt), v = TRUE))
+    # 
+    # # convert all columns from lists to characters
+    # related_clusters_dt[, names(related_clusters_dt) := lapply(.SD, as.character)]
+    # 
+    # # convert the only character column to factor
+    # # related_clusters_dt[, cluster_name_t := factor(cluster_name_t)]
+    # 
+    # # now convert all numerical cols to numeric
+    # related_clusters_dt[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
     
     # add the parent cluster name
     related_clusters_dt[, parent_cluster_name := selected_cluster[, cluster_name]]
     
     # rearrange column orders to have the parent cluster as the first column
     setcolorder(related_clusters_dt, c(ncol(related_clusters_dt), 2, 1, 3:(ncol(related_clusters_dt)-1)))
+
+    related_clusters_dt_out <<- copy(related_clusters_dt)
     
     # related_clusters_dt_out <<- related_clusters_dt[, .(parent_cluster_name, cluster_name_t, related_percentage)]
-    related_clusters_dt_out <<- related_clusters_dt
-    
   } else{
-    invisible(cat("\tThe cluster", selected_cluster_name, "has no related clusters\n"))
+    if(verbose) invisible(cat("\tThe cluster", selected_cluster_name, "has no related clusters\n"))
     related_clusters_dt <- data.table()
   }
   
