@@ -809,23 +809,10 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list){
   # get a list that only contains all of the related clusters
   all_related_clusters <- sapply(clusters_list_input, function(x) x$related_clusters)
   
-  related_clusters_names <- character()
-  # 
-  # for(i in 1:length(all_related_clusters)){
-  #   tmp <- sapply(all_related_clusters[[i]], function(x) x$cluster_name_t) %>% unname()
-  #   if(length(tmp) > 0){
-  #     related_clusters_names <- c(related_clusters_names, tmp)
-  #     names(all_related_clusters[[i]]) <- tmp
-  #   }else{
-  #     tmp <- "no_related_clusters"
-  #     related_clusters_names <- c(related_clusters_names, tmp)
-  #   }
-  # }
-  # 
   # declare an empty data.table to hold the related clusters data
   tmpdt <- data.table()
   
-  # loop over the nested lists
+  # loop over the nested lists, convert most inner list to data.table and append
   for(i in 1:length(all_related_clusters)){
     k <- length(all_related_clusters[[i]])
     if(k > 0){
@@ -839,7 +826,7 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list){
   
   setcolorder(tmpdt, c(length(tmpdt), 1:(length(tmpdt)-1)))
   
-  # this will resulte in all columns be factors, let's fix that
+  # fix col types
   integer_cols <- c("cluster_code_t", "related_90", "related_i20_90", "related_i20_90_min", "related_percentage")
   numeric_cols <- c("related_avg", "related_min")
   
