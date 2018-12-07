@@ -806,6 +806,11 @@ add_short_names <- function(clusters_dt = NULL
 #=============================== get_all_related_clusters ===============================#
 #========================================================================================#
 get_all_related_clusters <- function(clusters_list_input = clusters_list){
+  # this function takes as an input the clusters_list list and 
+  # returns a data.table which contains all of the related clusters
+  
+  if(is.null(clusters_list_input)) stop("\tI need a valid clusters_list_input to work with. Quitting...\n")
+  
   # get a list that only contains all of the related clusters
   all_related_clusters <- sapply(clusters_list_input, function(x) x$related_clusters)
   
@@ -814,25 +819,36 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list){
   
   # loop over the nested lists, convert most inner list to data.table and append
   for(i in 1:length(all_related_clusters)){
+    # i goes over the number of items in our clusters_list_input
     k <- length(all_related_clusters[[i]])
+    # k is the number of items in a given item, so it is a sub of the sub of the list
     if(k > 0){
+      # if k = 0, that list item has no related clusters
       for(j in 1:k){
+        # now that we are down to the sub item of the sub item, we need to get 
+        # data for that related cluster
         tmp <- all_related_clusters[[i]][[j]] %>% as.data.table()
+        
+        # now add the name of the parent cluster
         tmp[, parent_cluster_name := names(all_related_clusters)[i]]
+        
+        # now bind to the tmpdt data.table object
         tmpdt <- rbind(tmpdt, tmp)
       }
     }
   }
   
+  # fix the order to have the parent cluster as the first column
   setcolorder(tmpdt, c(length(tmpdt), 1:(length(tmpdt)-1)))
   
-  # fix col types
+  # fix column types
   integer_cols <- c("cluster_code_t", "related_90", "related_i20_90", "related_i20_90_min", "related_percentage")
   numeric_cols <- c("related_avg", "related_min")
   
   tmpdt[, (integer_cols) := lapply(.SD, as.integer), .SDcols = integer_cols]
   tmpdt[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
   
+  # and we are done!
   return(tmpdt)
 }
 #========================================================================================#
