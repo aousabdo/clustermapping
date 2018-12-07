@@ -811,6 +811,10 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list){
   
   if(is.null(clusters_list_input)) stop("\tI need a valid clusters_list_input to work with. Quitting...\n")
   
+  # first we need to filter our clusters, only keep traded clusters
+  traded <- sapply(clusters_list_input, function(x) x$traded_b)
+  clusters_list_input <- clusters_list_input[traded]
+  
   # get a list that only contains all of the related clusters
   all_related_clusters <- sapply(clusters_list_input, function(x) x$related_clusters)
   
@@ -835,6 +839,8 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list){
         # now bind to the tmpdt data.table object
         tmpdt <- rbind(tmpdt, tmp)
       }
+    }else{
+      print(paste("cluster", names(all_related_clusters)[i], "has no related clusters"))
     }
   }
   
