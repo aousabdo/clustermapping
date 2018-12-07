@@ -825,6 +825,7 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list
   # this empty data.table will be used to hold rows of data for 
   # clusters with no related clusters
   empty_dt <- data.table(parent_cluster_name = NA
+                         , parent_cluster_code = NA
                          , cluster_code_t = NA
                          , cluster_name_t = NA
                          , related_90 = NA
@@ -849,6 +850,9 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list
         # now add the name of the parent cluster
         tmp[, parent_cluster_name := names(all_related_clusters)[i]]
         
+        # and now add the cluster code for the parent cluster
+        tmp[, parent_cluster_code := clusters_list_input[[parent_cluster_name]]$cluster_code_t]
+        
         # now bind to the tmpdt data.table object
         tmpdt <- rbind(tmpdt, tmp)
       }
@@ -859,6 +863,9 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list
       # add name of cluster to the empty data.table
       empty_dt[, parent_cluster_name := names(all_related_clusters)[i]]
       
+      # and now add the cluster code for the parent cluster
+      empty_dt[, parent_cluster_code := clusters_list_input[[parent_cluster_name]]$cluster_code_t]
+      
       # rbind the empty_dt to the tmpdt
       # note that empty_dt will reset everytime
       tmpdt <- rbind(tmpdt, empty_dt)
@@ -866,14 +873,17 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list
   }
   
   # fix the order to have the parent cluster as the first column
-  setcolorder(tmpdt, c(length(tmpdt), 1:(length(tmpdt)-1)))
+  setcolorder(tmpdt, c(length(tmpdt), length(tmpdt) - 1, 1:(length(tmpdt)-2)))
   
   # fix column types
-  integer_cols <- c("cluster_code_t", "related_90", "related_i20_90", "related_i20_90_min", "related_percentage")
+  integer_cols <- c("parent_cluster_code", "cluster_code_t", "related_90", "related_i20_90", "related_i20_90_min", "related_percentage")
   numeric_cols <- c("related_avg", "related_min")
   
   tmpdt[, (integer_cols) := lapply(.SD, as.integer), .SDcols = integer_cols]
   tmpdt[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
+  
+  # clean the names
+  setnames(tmpdt, old = names(tmpdt), new = c(names(tmpdt)[1:2], "related_cluster_code", "related_cluster_name", names(tmpdt)[5:ncol(tmpdt)]))
   
   # and we are done!
   return(tmpdt)
