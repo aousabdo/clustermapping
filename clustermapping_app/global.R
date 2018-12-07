@@ -853,8 +853,14 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list
         tmpdt <- rbind(tmpdt, tmp)
       }
     }else{
+      # if no related cluster then tell the user if verbose is true
       if(verbose) invisible(cat("\tcluster", names(all_related_clusters)[i], "has no related clusters\n"))
+      
+      # add name of cluster to the empty data.table
       empty_dt[, parent_cluster_name := names(all_related_clusters)[i]]
+      
+      # rbind the empty_dt to the tmpdt
+      # note that empty_dt will reset everytime
       tmpdt <- rbind(tmpdt, empty_dt)
     }
   }
