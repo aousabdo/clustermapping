@@ -805,7 +805,8 @@ add_short_names <- function(clusters_dt = NULL
 #========================================================================================#
 #=============================== get_all_related_clusters ===============================#
 #========================================================================================#
-get_all_related_clusters <- function(clusters_list_input = clusters_list){
+get_all_related_clusters <- function(clusters_list_input = clusters_list
+                                     , verbose = FALSE){
   # this function takes as an input the clusters_list list and 
   # returns a data.table which contains all of the related clusters
   
@@ -820,6 +821,18 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list){
   
   # declare an empty data.table to hold the related clusters data
   tmpdt <- data.table()
+  
+  # this empty data.table will be used to hold rows of data for 
+  # clusters with no related clusters
+  empty_dt <- data.table(parent_cluster_name = NA
+                         , cluster_code_t = NA
+                         , cluster_name_t = NA
+                         , related_90 = NA
+                         , related_i20_90 = NA
+                         , related_i20_90_min = NA 
+                         , related_percentage = NA
+                         , related_avg = NA
+                         , related_min = NA)
   
   # loop over the nested lists, convert most inner list to data.table and append
   for(i in 1:length(all_related_clusters)){
@@ -840,7 +853,9 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list){
         tmpdt <- rbind(tmpdt, tmp)
       }
     }else{
-      print(paste("cluster", names(all_related_clusters)[i], "has no related clusters"))
+      if(verbose) invisible(cat("\tcluster", names(all_related_clusters)[i], "has no related clusters\n"))
+      empty_dt[, parent_cluster_name := names(all_related_clusters)[i]]
+      tmpdt <- rbind(tmpdt, empty_dt)
     }
   }
   
