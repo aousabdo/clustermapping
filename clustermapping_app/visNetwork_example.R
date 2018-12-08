@@ -40,6 +40,20 @@ setorder(edges, from)
 edges[, from_to := paste(from, to, sep = "_")]
 edges[, to_from := paste(to, from, sep = "_")]
 
+# the edges data.table has duplicate entries, an edges from cluster a to b is a duplicate of 
+# the edge from cluster b to a. We need to remove those duplicats
+
+for(i in 1:nrow(edges)){
+  new_to   <- tmp[i, from]
+  new_from <- tmp[i, to]
+  duplicate_row <- edges[to == new_to & from == new_from]
+  print(duplicate_row)
+  if(nrow(duplicate_row) > 0){
+    # invisible(cat(paste("deleting row", i, "\n")))
+  }
+  edges[to == new_to & from == new_from, (c("from", "to")) := NA ]
+}
+edges <- edges[!is.na(from) & !is.na(to)]
 
 IDs <- all_related_clusters[, unique(parent_cluster_code)]
 
@@ -49,4 +63,5 @@ nodes <- data.table(id = IDs
 nodes[, title := paste0("<p><b>", label,"</b></p>") ]
 nodes[, shadows := TRUE]
 
+set.seed(123)
 visNetwork(nodes, edges)
