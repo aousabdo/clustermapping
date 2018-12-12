@@ -21,7 +21,7 @@ nodes <- data.frame(id = 1:10,
                     
                     # shadow
                     shadow = c(FALSE, TRUE, FALSE, TRUE, TRUE)
-                    )             
+)             
 
 # head(nodes)
 # id  label group value    shape                     title    color shadow
@@ -59,5 +59,10 @@ nodes[, title := paste0("<p><b>", label,"</b></p>") ]
 nodes[, shadows := TRUE]
 
 set.seed(123)
+remove.nas <- TRUE
+if(remove.nas){
+  edges <- edges[complete.cases(edges)]
+  nodes <- nodes[!(id %in% tmp$from)]
+}
 visNetwork(nodes, edges)
 
