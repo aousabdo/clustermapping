@@ -35,25 +35,13 @@ all_related_clusters <- get_all_related_clusters(clusters_list_input = clusters_
 edges <- data.table(from = all_related_clusters[, parent_cluster_code], to = all_related_clusters[, related_cluster_code])
 
 # we need to get rid of double edges, this is the case where from:to is the exace opposite of to:from
-setkey(edges, from)
-setorder(edges, from)
-edges[, from_to := paste(from, to, sep = "_")]
-edges[, to_from := paste(to, from, sep = "_")]
+setkeyv(edges, c("from", "to"))
 
-# the edges data.table has duplicate entries, an edges from cluster a to b is a duplicate of 
-# the edge from cluster b to a. We need to remove those duplicats
+# add a column which would tell us if there is a duplicate. 
+# this took me a while to figure out!!!
+edges[, dup_col := ifelse(from < to, paste(from, to, sep = "_"), paste(to, from, sep = "_"))]
 
-for(i in 1:nrow(edges)){
-  new_to   <- tmp[i, from]
-  new_from <- tmp[i, to]
-  duplicate_row <- edges[to == new_to & from == new_from]
-  print(duplicate_row)
-  if(nrow(duplicate_row) > 0){
-    # invisible(cat(paste("deleting row", i, "\n")))
-  }
-  edges[to == new_to & from == new_from, (c("from", "to")) := NA ]
-}
-edges <- edges[!is.na(from) & !is.na(to)]
+edges <- unique(edges, by = "dup_col")
 
 IDs <- all_related_clusters[, unique(parent_cluster_code)]
 
@@ -65,3 +53,4 @@ nodes[, shadows := TRUE]
 
 set.seed(123)
 visNetwork(nodes, edges)
+
