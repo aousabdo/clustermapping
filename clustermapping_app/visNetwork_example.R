@@ -41,7 +41,14 @@ setkeyv(edges, c("from", "to"))
 # this took me a while to figure out!!!
 edges[, dup_col := ifelse(from < to, paste(from, to, sep = "_"), paste(to, from, sep = "_"))]
 
-edges <- unique(edges, by = "dup_col")
+# before we apply the unique function, we need to get out the NA's rows 
+tmp <- edges[is.na(to)]
+
+edges <- unique(edges[complete.cases(edges)], by = "dup_col")
+
+edges <- rbind(edges, tmp)
+
+setkeyv(edges, c("from", "to"))
 
 IDs <- all_related_clusters[, unique(parent_cluster_code)]
 
