@@ -49,15 +49,16 @@ edges <- unique(edges[complete.cases(edges)], by = "dup_col")
 edges <- rbind(edges, tmp)
 
 setkeyv(edges, c("from", "to")) %>%
-  
 
 IDs <- all_related_clusters[, unique(parent_cluster_code)]
 
 nodes <- data.table(id = IDs
-                    , label = clusters_avlbl[clusters_codes %in% IDs, clusters_names])
+                    , label = clusters_avlbl[clusters_codes %in% IDs, clusters_names]
+                    , value = 1)
 
 nodes[, title := paste0("<p><b>", label,"</b></p>") ]
 nodes[, shadows := TRUE]
+nodes[, shape := "square"]
 
 set.seed(123)
 remove.nas <- TRUE
@@ -68,10 +69,171 @@ if(remove.nas){
 
 visNetwork(nodes, edges) %>% 
   visIgraphLayout(layout = "layout_in_circle") %>%
-  visNodes(size = 10) %>%
+  visNodes(size = 45) %>%
   visOptions(highlightNearest = list(enabled = T, hover = T), 
              nodesIdSelection = T)
 
+layout_ <- "layout_with_mds"
+layout_ <- "layout_on_sphere"
+layout_ <- "layout_on_grid"
+layout_ <- "layout.star"
+
 visNetwork(nodes, edges)%>%
-  visIgraphLayout(layout = "layout_in_sphere") %>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+
+
+layout_ <- "layout.auto"	
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout.circle"	
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+
+# layout_ <- "layout.davidson.harel" 	
+# visNetwork(nodes, edges)%>%
+#   visIgraphLayout(layout = layout_) %>%
+#   visNodes(size = 10)
+
+# layout_ <- "layout.drl"
+# visNetwork(nodes, edges)%>%
+#   visIgraphLayout(layout = layout_) %>%
+#   visNodes(size = 10)
+
+layout_ <- "layout.fruchterman.reingold" 
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout.fruchterman.reingold.grid" 
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout.gem" 	
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout.graphopt" 
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+
+layout_ <- "layout.grid" 
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout.grid.3d"
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout.kamada.kawai"
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout.lgl" 
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout.mds"
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout.random"
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout.reingold.tilford" 
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+
+# layout_ <- "layout_as_star"
+# visNetwork(nodes, edges)%>%
+#   visIgraphLayout(layout = layout_) %>%
+#   visNodes(size = 10)
+# 
+# layout_ <- "layout_as_tree"
+# visNetwork(nodes, edges)%>%
+#   visIgraphLayout(layout = layout_) %>%
+#   visNodes(size = 10)
+
+layout_ <- "layout_in_circle"
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout_nicely"
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout_on_grid" 
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout_on_sphere" 
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout_randomly" 
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout_with_dh" 
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout_with_drl"
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout_with_fr" 
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout_with_gem"
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout_with_graphopt"
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout_with_kk"
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+layout_ <- "layout_with_lgl"
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
+  visNodes(size = 10)
+
+
+layout_ <- "layout_with_sugiyama"
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = layout_) %>%
   visNodes(size = 10)
