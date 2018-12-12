@@ -48,7 +48,8 @@ edges <- unique(edges[complete.cases(edges)], by = "dup_col")
 
 edges <- rbind(edges, tmp)
 
-setkeyv(edges, c("from", "to"))
+setkeyv(edges, c("from", "to")) %>%
+  
 
 IDs <- all_related_clusters[, unique(parent_cluster_code)]
 
@@ -64,5 +65,13 @@ if(remove.nas){
   edges <- edges[complete.cases(edges)]
   nodes <- nodes[!(id %in% tmp$from)]
 }
-visNetwork(nodes, edges)
 
+visNetwork(nodes, edges) %>% 
+  visIgraphLayout(layout = "layout_in_circle") %>%
+  visNodes(size = 10) %>%
+  visOptions(highlightNearest = list(enabled = T, hover = T), 
+             nodesIdSelection = T)
+
+visNetwork(nodes, edges)%>%
+  visIgraphLayout(layout = "layout_in_sphere") %>%
+  visNodes(size = 10)
