@@ -48,11 +48,12 @@ edges <- unique(edges[complete.cases(edges)], by = "dup_col")
 
 edges <- rbind(edges, tmp)
 
-setkeyv(edges, c("from", "to")) %>%
+setkeyv(edges, c("from", "to")) 
 
 IDs <- all_related_clusters[, unique(parent_cluster_code)]
 
 nodes <- data.table(id = IDs
+                    , cluster_clde = IDs
                     , label = clusters_avlbl[clusters_codes %in% IDs, clusters_names]
                     , value = 1)
 
@@ -60,12 +61,12 @@ nodes[, title := paste0("<p><b>", label,"</b></p>") ]
 nodes[, shadows := TRUE]
 nodes[, shape := "square"]
 
-set.seed(123)
-remove.nas <- TRUE
-if(remove.nas){
-  edges <- edges[complete.cases(edges)]
-  nodes <- nodes[!(id %in% tmp$from)]
-}
+# set.seed(123)
+# remove.nas <- TRUE
+# if(remove.nas){
+#   edges <- edges[complete.cases(edges)]
+#   nodes <- nodes[!(id %in% edges$from)]
+# }
 
 visNetwork(nodes, edges) %>% 
   visIgraphLayout(layout = "layout_in_circle") %>%
