@@ -760,19 +760,20 @@ build_horiz_bubble_chart <- function(data = NULL
 #========================================================================================#
 add_short_names <- function(clusters_dt = NULL
                             , clusters_list_input = clusters_list
-                            , by_column = "cluster_code"){
+                            , by_column = "cluster_code"
+                            , short_col_name = NULL){
   # this function takes a data.table which contains some clusters and adds the 
   # short name of these clusters
   if(!is.data.table(clusters_dt)) tmp <- as.data.table(clusters_dt)
   else tmp <- copy(clusters_dt)
   
   if(is.null(by_column)) stop("\tI need a column name to merge by...")
-  if(sum(by_column %in% c("cluster_code", "cluster_key")) == 0) stop("\tby_column can be one of: \"cluster_code\" or \"cluster_key\" ")
+  # if(sum(by_column %in% c("cluster_code", "cluster_key")) == 0) stop("\tby_column can be one of: \"cluster_code\" or \"cluster_key\" ")
   
   # first we will take the clusters_list and get a data.table out of it
   # we will get the by_column plus the cluster_short_name columns
   
-  if(by_column == "cluster_code"){
+  if(by_column %like% "cluster_code"){
     by_column_tmp  <- sapply(clusters_list_input, function(x) x$cluster_code_t) %>% unname() %>% as.integer()
   }else if(by_column == "cluster_key"){
     by_column_tmp  <- sapply(clusters_list_input, function(x) x$key_t) %>% unname()
@@ -784,7 +785,7 @@ add_short_names <- function(clusters_dt = NULL
   tmp2 <- cbind(by_column_tmp, cluster_short_name)
   tmp2 <- as.data.table(tmp2)
   
-  if(by_column == "cluster_code"){
+  if(by_column %like% "cluster_code"){
     tmp2[, by_column_tmp := as.integer(by_column_tmp)]
   }
   setnames(tmp2, c(by_column, "cluster_short_name"))
@@ -795,6 +796,14 @@ add_short_names <- function(clusters_dt = NULL
     cat("Caught an error in the column names. will try adding a \"_t\" to column names.\n")
     try(tmp <- merge(tmp, tmp2, by.x = paste0(by_column, "_t"), by.y = by_column, TRUE))
   }
+  
+  # change name of short column that we just added if user elected to do so
+  if(!is.null(short_col_name)){
+    setnames(tmp, names(tmp), c(names(tmp)[1:(ncol(tmp) - 1)], short_col_name))
+  }
+  
+  # Some of the short names contsin the & sign, this will cause us problems and we need to fix it
+  tmp[, cluster_short_name := gsub("\\&", "and", cluster_short_name)]
   
   return(tmp)
 }
@@ -891,3 +900,58 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list
 #========================================================================================#
 #============================= End: get_all_related_clusters ============================#
 #========================================================================================#
+
+#========================================================================================#
+#==================================== build_graph_vis ===================================#
+#========================================================================================#
+build_graph_vis <- function(related_cluster_input = NULL
+                            , clusters_avlbl_input = clusters_avlbl){
+  # this function takes as an input a data.table with the cluster linkeages 
+  # and produces a visNetwork plot
+  
+  if(is.null(related_cluster_input)) stop("\tI need a related_cluster_input data.table to work with...\n")
+  
+  # build the edges of the graph
+  # start by adding the from and to columns
+  edges <- copy(related_cluster_input)
+  
+  edges[, from := parent_cluster_code]
+  edges[, to := related_cluster_code]
+  
+  # add a column which would tell us if there is a duplicate. 
+  # this took me a while to figure out!!!
+  edges[, dup_col := ifelse(from < to, paste(from, to, sep = "_"), paste(to, from, sep = "_"))]
+  
+  # before we apply the unique function, we need to get out the NA's rows 
+  tmp <- edges[is.na(to)]
+  
+  edges <- unique(edges[complete.cases(edges)], by = "dup_col")
+  
+  edges <- rbind(edges, tmp)
+  
+  setkeyv(edges, c("from", "to")) 
+
+  # now we need to take care of the connections, some of them will be dashed, this depneds on the strength of the connection
+  edges[, sum_relatedness := related_90 + related_i20_90 + related_i20_90_min]
+  
+  edges <- edges[sum_relatedness == 3]
+
+  # work on the nodes now
+  IDs <- related_cluster_input[, unique(parent_cluster_code)]
+  
+  nodes <- data.table(cluster_code = IDs
+                      , cluster_name = clusters_avlbl_input[clusters_codes %in% IDs, clusters_names])
+  
+  nodes <- add_short_names(clusters_dt = nodes
+                           , by_column = "cluster_code"
+                           , short_col_name = "label")
+  
+  setnames(nodes, c("id", names(nodes)[2:ncol(nodes)]))
+  nodes[ , label := gsub("\\&", "and", label)]
+
+  return(list(edges = edges, nodes = nodes))
+}
+#========================================================================================#
+#================================= End: build_graph_vis =================================#
+#========================================================================================#
+
