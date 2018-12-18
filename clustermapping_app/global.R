@@ -321,6 +321,9 @@ build_network_viz <- function(cluster_data = NULL){
   # remove the first row which is the parent cluster with itself
   edges_d3 <- edges_d3[2:.N]
   
+  edges_d3_out <<- edges_d3
+  nodes_d3_out <<- nodes_d3
+  
   # make network graph
   forceNetwork_viz <- forceNetwork(
     Links = edges_d3, Nodes = nodes_d3,  
@@ -905,37 +908,52 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list
 #==================================== build_graph_vis ===================================#
 #========================================================================================#
 build_graph_vis <- function(related_cluster_input = NULL
-                            , clusters_avlbl_input = clusters_avlbl){
+                            , clusters_avlbl_input = clusters_avlbl
+                            , apply_filters = TRUE){
   # this function takes as an input a data.table with the cluster linkeages 
   # and produces a visNetwork plot
   
   if(is.null(related_cluster_input)) stop("\tI need a related_cluster_input data.table to work with...\n")
   
   # build the edges of the graph
-  # start by adding the from and to columns
   edges <- copy(related_cluster_input)
   
+  # start by adding the from and to columns
   edges[, from := parent_cluster_code]
   edges[, to := related_cluster_code]
   
   # add a column which would tell us if there is a duplicate. 
-  # this took me a while to figure out!!!
+  # this netowrk is a one-mode network, so we need to get rid of the duplicate edges
   edges[, dup_col := ifelse(from < to, paste(from, to, sep = "_"), paste(to, from, sep = "_"))]
   
-  # before we apply the unique function, we need to get out the NA's rows 
+  # before we apply the unique function, we need to get out the NA's rows, we might just need them later 
+  # temporarily store the NAs rows in their own table
   tmp <- edges[is.na(to)]
   
+  # now get the unique non-NA rows
+  # the unique command gets rid of the duplicate entris
   edges <- unique(edges[complete.cases(edges)], by = "dup_col")
   
+  # and now bind them together
   edges <- rbind(edges, tmp)
   
+  # and set the table keys
   setkeyv(edges, c("from", "to")) 
 
   # now we need to take care of the connections, some of them will be dashed, this depneds on the strength of the connection
   edges[, sum_relatedness := related_90 + related_i20_90 + related_i20_90_min]
   
-  edges <- edges[sum_relatedness == 3]
-
+  if(apply_filters){
+    edges <- edges[sum_relatedness == 3]
+  }
+  
+  # now we'll deal with the dashes and edge colors. According to clustermapping.us:
+  # dark-color edge connection: if the BCR >= 95th percentile & RI >= 20%
+  # light-color edge connection: if the BCR in the 90-94 percentile & RI >= 20%
+  edges[, width := ifelse(related_percentage >= 95, 4, 1)]
+  edges[, dashed := ifelse(related_percentage >= 95, FALSE, TRUE)]
+  edges[, color := ifelse(related_percentage >= 95, "black", "gray")]
+  
   # work on the nodes now
   IDs <- related_cluster_input[, unique(parent_cluster_code)]
   
@@ -948,6 +966,10 @@ build_graph_vis <- function(related_cluster_input = NULL
   
   setnames(nodes, c("id", names(nodes)[2:ncol(nodes)]))
   nodes[ , label := gsub("\\&", "and", label)]
+  
+  nodes[, title := paste0("<p><b>", label,"</b></p>") ]
+  nodes[, shadows := TRUE]
+  # nodes[, shape := "square"]
 
   return(list(edges = edges, nodes = nodes))
 }
