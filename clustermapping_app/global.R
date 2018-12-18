@@ -782,7 +782,20 @@ add_short_names <- function(clusters_dt = NULL
     by_column_tmp  <- sapply(clusters_list_input, function(x) x$key_t) %>% unname()
   }
   
-  cluster_short_name  <- sapply(clusters_list_input, function(x) x$short_name_t) %>% unname()
+  # get the short names
+  cluster_short_name    <- sapply(clusters_list_input, function(x) x$short_name_t) %>% unname()
+  
+  # some clusters have a shorter short name
+  cluster_short_name_2  <- sapply(clusters_list_input, function(x) x$short_name2_t) %>% unname()
+
+  # now put the two short names in one data table for merging
+  cluster_short_name_tmp <- cbind(cluster_short_name, cluster_short_name_2) %>% as.data.table()
+  
+  cluster_short_name_tmp[, short_name := ifelse(cluster_short_name_2 == "0" | 
+                                              cluster_short_name_2 == "Hospitality"
+                                            , cluster_short_name, cluster_short_name_2)]
+  
+  cluster_short_name <- cluster_short_name_tmp[, short_name]
   
   # bind strong-cluster data in one data.table object
   tmp2 <- cbind(by_column_tmp, cluster_short_name)
@@ -950,7 +963,7 @@ build_graph_vis <- function(related_cluster_input = NULL
   # now we'll deal with the dashes and edge colors. According to clustermapping.us:
   # dark-color edge connection: if the BCR >= 95th percentile & RI >= 20%
   # light-color edge connection: if the BCR in the 90-94 percentile & RI >= 20%
-  edges[, width := ifelse(related_percentage >= 95, 4, 1)]
+  edges[, width := ifelse(related_percentage >= 95, 3, 1)]
   edges[, dashes := ifelse(related_percentage >= 95, FALSE, TRUE)]
   edges[, color := ifelse(related_percentage >= 95, "steelblue", "steelblue")]
   
