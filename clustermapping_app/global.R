@@ -951,8 +951,8 @@ build_graph_vis <- function(related_cluster_input = NULL
   # dark-color edge connection: if the BCR >= 95th percentile & RI >= 20%
   # light-color edge connection: if the BCR in the 90-94 percentile & RI >= 20%
   edges[, width := ifelse(related_percentage >= 95, 4, 1)]
-  edges[, dashed := ifelse(related_percentage >= 95, FALSE, TRUE)]
-  edges[, color := ifelse(related_percentage >= 95, "black", "gray")]
+  edges[, dashes := ifelse(related_percentage >= 95, FALSE, TRUE)]
+  edges[, color := ifelse(related_percentage >= 95, "steelblue", "steelblue")]
   
   # work on the nodes now
   IDs <- related_cluster_input[, unique(parent_cluster_code)]
