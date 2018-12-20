@@ -140,6 +140,12 @@ shinyServer(function(input, output) {
     network_viz()$vizNetwork_basic
   }) 
   
+  output$vizNetwork_advanced <- renderVisNetwork({
+    vis <- build_graph_vis(related_cluster_input = all_related_clusters
+                           , clusters_avlbl_input = clusters_avlbl
+                           , apply_filters = T)[[3]]
+  }) 
+  
   output$forceNetwork_Viz <- renderForceNetwork({
     network_viz()$forceNetwork_viz
   })
@@ -171,6 +177,17 @@ shinyServer(function(input, output) {
                          , cluster_emp()
                          , widths = c(0.5, 0.4)
                          )
+  })
+
+  output$network <- renderVisNetwork({
+    nodes <- data.frame(id = 1:3); edges <- data.frame(from = c(1,2), to = c(1,3))
+    visNetwork(nodes, edges) %>% visNodes(color = "green")
+  })
+  output$test <- renderPrint({input$vizNetwork_advanced_positions})
+  observe({
+    input$getNodes
+    visNetworkProxy("vizNetwork_advanced") %>%
+      visGetPositions()
   })
   #===================================================================================#
   #================================== End: Outputs ===================================#

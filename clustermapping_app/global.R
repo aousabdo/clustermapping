@@ -13,6 +13,7 @@ library(igraph)
 library(stringr)
 library(data.table)
 library(htmlwidgets)
+library(shiny)
 
 # supress warnings
 options(warn = -1)
@@ -787,13 +788,13 @@ add_short_names <- function(clusters_dt = NULL
   
   # some clusters have a shorter short name
   cluster_short_name_2  <- sapply(clusters_list_input, function(x) x$short_name2_t) %>% unname()
-
+  
   # now put the two short names in one data table for merging
   cluster_short_name_tmp <- cbind(cluster_short_name, cluster_short_name_2) %>% as.data.table()
   
   cluster_short_name_tmp[, short_name := ifelse(cluster_short_name_2 == "0" | 
-                                              cluster_short_name_2 == "Hospitality"
-                                            , cluster_short_name, cluster_short_name_2)]
+                                                  cluster_short_name_2 == "Hospitality"
+                                                , cluster_short_name, cluster_short_name_2)]
   
   cluster_short_name <- cluster_short_name_tmp[, short_name]
   
@@ -923,7 +924,10 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list
 build_graph_vis <- function(related_cluster_input = NULL
                             , clusters_avlbl_input = clusters_avlbl
                             , apply_filters = TRUE
-                            , add_dashes = FALSE){
+                            , add_dashes = FALSE
+                            , add_node_position = TRUE
+                            , remvoe_empty_nodes = FALSE
+                            , selected_cluster = 3){
   # this function takes as an input a data.table with the cluster linkeages 
   # and produces a visNetwork plot
   
@@ -953,7 +957,7 @@ build_graph_vis <- function(related_cluster_input = NULL
   
   # and set the table keys
   setkeyv(edges, c("from", "to")) 
-
+  
   # now we need to take care of the connections, some of them will be dashed, this depneds on the strength of the connection
   edges[, sum_relatedness := related_90 + related_i20_90 + related_i20_90_min]
   
@@ -983,9 +987,44 @@ build_graph_vis <- function(related_cluster_input = NULL
   
   nodes[, title := paste0("<p><b>", label,"</b></p>") ]
   nodes[, shadows := TRUE]
-  # nodes[, shape := "square"]
-
-  return(list(edges = edges, nodes = nodes))
+  
+  #==================================================================================================#
+  #==================================================================================================#
+  #==================================================================================================#
+  # start working on the network visualization
+  if(add_node_position){
+    # add x and y coordinates
+    size <- nrow(nodes)
+    nodes[, x := round(runif(size) * 1000)]
+    nodes[, y := round(runif(size) * 1000)]
+  }
+  
+  # remove nodes with no connections
+  if(remvoe_empty_nodes){
+    nodes_w_edges <- c(edges[, from], edges[, to]) %>% unique()
+    nodes <- nodes[id %in% nodes_w_edges]
+  }
+  if(!(selected_cluster %in% edges[, from])) {stop("Cluster selected is not in our database...\n")}
+  
+  # selected_cluster <- edges[sample(unique(from), 1), from]
+  selected_nodes <- c(selected_cluster, edges[from == selected_cluster, to])
+  
+  print(selected_cluster)
+  print(selected_nodes)
+  
+  p <- visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
+    visNodes(size = 25, physics = F, fixed = F) %>%
+    visOptions(highlightNearest = list(enabled = T, hover = T, degree=1
+                                       , labelOnly = FALSE
+    ), 
+    nodesIdSelection = list(enabled = T
+                            , selected=selected_cluster)
+    , collapse = TRUE
+    )  %>% 
+    visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE
+                   , hoverConnectedEdges = T, navigationButtons = T)
+    
+    return(list(edges = edges, nodes = nodes, visGraph = p))
 }
 #========================================================================================#
 #================================= End: build_graph_vis =================================#
