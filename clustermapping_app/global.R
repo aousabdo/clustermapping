@@ -1012,7 +1012,7 @@ build_graph_vis <- function(related_cluster_input = NULL
   selected_nodes <- c(selected_cluster, edges[from == selected_cluster, to])
   
   p <- visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
-    visNodes(size = 25, physics = F, fixed = F) %>%
+    visNodes(size = 25, physics = F, fixed = TRUE) %>%
     visOptions(highlightNearest = list(enabled = T, hover = T, degree=1
                                        , labelOnly = FALSE
     ), 
