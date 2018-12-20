@@ -176,19 +176,33 @@ shinyServer(function(input, output) {
                          , donut_chart()
                          , cluster_emp()
                          , widths = c(0.5, 0.4)
-                         )
+    )
   })
-
+  
   output$network <- renderVisNetwork({
     nodes <- data.frame(id = 1:3); edges <- data.frame(from = c(1,2), to = c(1,3))
     visNetwork(nodes, edges) %>% visNodes(color = "green")
   })
-  output$test <- renderPrint({input$vizNetwork_advanced_positions})
-  observe({
-    input$getNodes
-    visNetworkProxy("vizNetwork_advanced") %>%
-      visGetPositions()
+  output$test <- renderPrint({
+    input$vizNetwork_advanced_positions
   })
+  
+  # observe({
+  #   input$getNodes
+  #   visNetworkProxy("vizNetwork_advanced") %>%
+  #     visGetPositions()
+  # })
+  
+  vals <- reactiveValues(coords=NULL)
+  
+  observeEvent(input$goButton, {
+    visNetworkProxy("vizNetwork_advanced") %>% visGetPositions()
+    vals$coords <- if(!is.null(input$vizNetwork_advanced_positions)){ 
+      do.call(rbind, input$vizNetwork_advanced_positions)
+    }
+  })
+
+  output$foo <- renderText({vals()})
   #===================================================================================#
   #================================== End: Outputs ===================================#
   #===================================================================================#

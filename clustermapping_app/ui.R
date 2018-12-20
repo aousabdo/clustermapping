@@ -17,7 +17,7 @@ shinyUI(fluidPage(
                                          , label = "Select a Year"
                                          , choices = meta_data$years_avlbl
                                          , selected = max(meta_data$years_avlbl))
-                             , actionButton("getNodes", "Get nodes data Aous")
+                             , actionButton("getNodes", "Get nodes")
                 ),
                 
                 # Show a plot of the generated distribution
@@ -30,6 +30,8 @@ shinyUI(fluidPage(
                            # , DT::dataTableOutput("strong_clusters")
                            # , sankeyNetworkOutput("sankeyNetwork_Viz")
                            , visNetworkOutput("vizNetwork_advanced", height = "1000px", width = "1400px")
+                           , textOutput("foo")
+                           , verbatimTextOutput("test")
                            # , visNetworkOutput("vizNetwork_basic")
                            # , textOutput("region_clusters")
                            
@@ -47,10 +49,11 @@ shinyUI(fluidPage(
                            shiny::dataTableOutput("sub_clusters"),
                            shiny::dataTableOutput("industries")
                            # , forceNetworkOutput("forceNetwork_Viz")
-                  ), 
-                  tabPanel("test"
-                           , visNetworkOutput("network", height = "100%"),
-                           verbatimTextOutput("test"))
+                  ) 
+                  # , tabPanel("test"
+                  #          , visNetworkOutput("network", height = "1000px", width = "1400px") 
+                  #          , verbatimTextOutput("test")
+                  #          )
                   ))
   )
 ))
