@@ -7,6 +7,11 @@ nodes <- build_graph_vis(related_cluster_input = all_related_clusters
                          , clusters_avlbl_input = clusters_avlbl
                          , apply_filters = T)[[2]]
 
+# add x and y coordinates
+size <- nrow(nodes)
+nodes[, x := round(runif(size) * 1000)]
+nodes[, y := round(runif(size) * 1000)]
+
 # remove nodes with no connections
 nodes_w_edges <- c(edges[, from], edges[, to]) %>% unique()
 nodes <- nodes[id %in% nodes_w_edges]
@@ -19,24 +24,41 @@ print(selected_nodes)
 
 
 visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
-  visNodes(size = 25, physics = F, x = 1:nrow(nodes)) %>%
-  visLayout(improvedLayout = T) %>%
+  # visIgraphLayout(layout = 'layout.davidson.harel') %>%
+  visNodes(size = 25, physics = F, fixed = F) %>%
+  # visLayout(improvedLayout = T, randomSeed = 123) %>%
   visOptions(highlightNearest = list(enabled = T, hover = T, degree=1
-                                     , algorithm="hierarchical"
+                                     # , algorithm="hierarchical"
                                      # , hideColor="red"
                                      , labelOnly = FALSE
-                                     ), 
-             nodesIdSelection = list(enabled = T
-                                     , selected=selected_cluster)
-             #, selectedBy = list(variable="id",selected = 5, values = c(5,6,11))
-             )  %>% 
+  ), 
+  nodesIdSelection = list(enabled = T
+                          , selected=selected_cluster)
+  , collapse = TRUE
+  )  %>% 
   visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE
                  , hoverConnectedEdges = T, navigationButtons = T) %>% 
-  # visPhysics(solver = "repulsion"
-  #            , barnesHut = list(gravitaionalConstant=-2000
-  #                               , springConstant=0.001
-  #                               , avoidOverlap=1)) %>%
+  visPhysics(repulsion = list(springlength = 50), # usually will take some tweaking
+             maxVelocity = 2,
+             solver = "forceAtlas2Based",
+             forceAtlas2Based = list(gravitationalConstant = -100),
+             timestep = 0.25)
   print()
+
+visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
+  visIgraphLayout(layout = "layout_with_kk", # or use igraph's `layout_*`s in quotes
+                  # layout = "layout.norm",  # using saved coords? set this!
+                  # layoutMatrix = coords,   # our previous coords
+                  smooth = FALSE,            # set to F when bogged by bigger graphs
+                  physics = TRUE             # set to F when bogged by bigger graphs
+  ) %>% 
+  visNodes(size = 50) %>%
+  visEdges(color = list(highlight = "lightgray")) %>%
+  visPhysics(repulsion = list(springlength = 50), # usually will take some tweaking
+             maxVelocity = 2,
+             solver = "forceAtlas2Based",
+             forceAtlas2Based = list(gravitationalConstant = -1000),
+             timestep = 0.25)
 
 # sankeyNetwork(
 #   Links = edges, Nodes = nodes,
