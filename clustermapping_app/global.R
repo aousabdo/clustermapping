@@ -994,11 +994,14 @@ build_graph_vis <- function(related_cluster_input = NULL
   # start working on the network visualization
   if(add_node_position){
     # add x and y coordinates
-    # first read the file containing the positions of nodes
-    coords <- readRDS(cluster_network_positions_file)
-
-    nodes[, x := coords$x]
-    nodes[, y := coords$y]
+    if(file.exists(cluster_network_positions_file)){
+      # first read the file containing the positions of nodes
+      coords <- readRDS(cluster_network_positions_file)
+      
+      # add positions
+      nodes[, x := coords$x]
+      nodes[, y := coords$y]
+    }
   }
   
   # remove nodes with no connections
@@ -1022,8 +1025,8 @@ build_graph_vis <- function(related_cluster_input = NULL
     )  %>% 
     visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE
                    , hoverConnectedEdges = T, navigationButtons = T)
-    
-    return(list(edges = edges, nodes = nodes, visGraph = p))
+  
+  return(list(edges = edges, nodes = nodes, visGraph = p))
 }
 #========================================================================================#
 #================================= End: build_graph_vis =================================#

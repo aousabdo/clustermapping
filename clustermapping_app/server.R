@@ -143,7 +143,8 @@ shinyServer(function(input, output) {
   output$vizNetwork_advanced <- renderVisNetwork({
     vis <- build_graph_vis(related_cluster_input = all_related_clusters
                            , clusters_avlbl_input = clusters_avlbl
-                           , apply_filters = T)[[3]]
+                           , apply_filters = T
+                           , cluster_network_positions_file = "./data/cluster_network_positions.Rds")[[3]]
   }) 
   
   output$forceNetwork_Viz <- renderForceNetwork({
