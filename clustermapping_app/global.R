@@ -165,6 +165,7 @@ get_cluster_data <- function(strong_clusters_dt = NULL
   # get the cluster selected by the user
   selected_cluster <- strong_clusters_dt[strong_clusters_rows_selected]
   
+  selected_cluster_out <<- copy(selected_cluster)
   # now we query the cluster list data for the cluster selected by the user
   selected_cluster_key <- selected_cluster$cluster_key %>% as.character() 
   # The as.character is crucial, otherwise we'll get the wrong related clusters
@@ -231,11 +232,14 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     # # now convert all numerical cols to numeric
     # related_clusters_dt[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
     
-    # add the parent cluster name
+    # add the parent cluster name and code
     related_clusters_dt[, parent_cluster_name := selected_cluster[, cluster_name]]
+    related_clusters_dt[, parent_cluster_code := selected_cluster[, cluster_code]]
+    related_clusters_dt[, parent_cluster_short_name := selected_cluster[, cluster_short_name]]
     
     # rearrange column orders to have the parent cluster as the first column
-    setcolorder(related_clusters_dt, c(ncol(related_clusters_dt), 2, 1, 3:(ncol(related_clusters_dt)-1)))
+    setcolorder(related_clusters_dt, c((ncol(related_clusters_dt_out)-2):ncol(related_clusters_dt_out)
+                                       , 2, 1, 3:(ncol(related_clusters_dt)-3)))
     
     related_clusters_dt_out <<- copy(related_clusters_dt)
     
