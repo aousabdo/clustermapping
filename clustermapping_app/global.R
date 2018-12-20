@@ -922,7 +922,8 @@ get_all_related_clusters <- function(clusters_list_input = clusters_list
 #========================================================================================#
 build_graph_vis <- function(related_cluster_input = NULL
                             , clusters_avlbl_input = clusters_avlbl
-                            , apply_filters = TRUE){
+                            , apply_filters = TRUE
+                            , add_dashes = FALSE){
   # this function takes as an input a data.table with the cluster linkeages 
   # and produces a visNetwork plot
   
@@ -964,7 +965,7 @@ build_graph_vis <- function(related_cluster_input = NULL
   # dark-color edge connection: if the BCR >= 95th percentile & RI >= 20%
   # light-color edge connection: if the BCR in the 90-94 percentile & RI >= 20%
   edges[, width := ifelse(related_percentage >= 95, 3, 1)]
-  edges[, dashes := ifelse(related_percentage >= 95, FALSE, TRUE)]
+  if(add_dashes) edges[, dashes := ifelse(related_percentage >= 95, FALSE, TRUE)]
   edges[, color := ifelse(related_percentage >= 95, "steelblue", "steelblue")]
   
   # work on the nodes now
