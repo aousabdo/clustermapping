@@ -30,7 +30,7 @@ shinyUI(fluidPage(
                            , visNetworkOutput("vizNetwork_advanced", height = "800px", width = "1000px")
                            # , DT::dataTableOutput("strong_clusters")
                            # , sankeyNetworkOutput("sankeyNetwork_Viz")
-                           , visNetworkOutput("vizNetwork_basic")
+                           # , visNetworkOutput("vizNetwork_basic")
                            # , textOutput("region_clusters")
                            
                   ),

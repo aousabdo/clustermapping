@@ -229,11 +229,12 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     setcolorder(related_clusters_dt, c((ncol(related_clusters_dt_out)-2):ncol(related_clusters_dt_out)
                                        , 2, 1, 3:(ncol(related_clusters_dt)-3)))
     
-    related_clusters_dt_out <<- copy(related_clusters_dt)
-    
     # related_clusters_dt_out <<- related_clusters_dt[, .(parent_cluster_name, cluster_name_t, related_percentage)]
   } else{
     if(verbose) invisible(cat("\tThe cluster", selected_cluster_name, "has no related clusters\n"))
+    
+    # we will still populate the realted_clusters data.table with the parent cluster info
+    # and NAs for related clusters data
     related_clusters_dt <- data.table(parent_cluster_name = selected_cluster[, cluster_name])
     related_clusters_dt[, parent_cluster_code := selected_cluster[, cluster_code]]
     related_clusters_dt[, parent_cluster_short_name := selected_cluster[, cluster_short_name]]
@@ -247,6 +248,8 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     related_clusters_dt[, related_avg := NA]
     related_clusters_dt[, related_min := NA]
   }
+  
+  related_clusters_dt_out <<- copy(related_clusters_dt)
   
   # get a list of industries, naics, by year
   industries_2012 <- selected_cluster_data$naics_2012 %>% 
