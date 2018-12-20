@@ -29,9 +29,6 @@ shinyUI(fluidPage(
                            , plotly::plotlyOutput("combined_plots_1", height = "auto", width = "1400px")
                            # , DT::dataTableOutput("strong_clusters")
                            # , sankeyNetworkOutput("sankeyNetwork_Viz")
-                           , visNetworkOutput("vizNetwork_advanced", height = "1000px", width = "1400px")
-                           , textOutput("foo")
-                           , verbatimTextOutput("test")
                            # , visNetworkOutput("vizNetwork_basic")
                            # , textOutput("region_clusters")
                            
@@ -50,10 +47,10 @@ shinyUI(fluidPage(
                            shiny::dataTableOutput("industries")
                            # , forceNetworkOutput("forceNetwork_Viz")
                   ) 
-                  # , tabPanel("test"
-                  #          , visNetworkOutput("network", height = "1000px", width = "1400px") 
-                  #          , verbatimTextOutput("test")
-                  #          )
+                  , tabPanel("test"
+                             , visNetworkOutput("vizNetwork_advanced", height = "800px", width = "1000px")
+                             , dataTableOutput("test2")
+                           )
                   ))
   )
 ))

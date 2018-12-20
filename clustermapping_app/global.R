@@ -42,7 +42,7 @@ get_strong_clusters <- function(region_name = NULL
                                 , year_selected = 2016
                                 , meta_data_list = meta_dta
                                 , base_url = "http://54.83.53.228/data"
-                                , verbose = TRUE
+                                , verbose = FALSE
                                 , clusters_list_input = clusters_list
                                 , by_column = "cluster_code"){
   # given a region name, a regions_dt, and a year, this function will return a 
@@ -726,7 +726,6 @@ build_horiz_bubble_chart <- function(data = NULL
   
   # scale
   scale_value     <- scale_value/sum(sqrt(tmp$value))
-  print(scale_value)
   
   # calculate scaled centers and radii of bubbles           
   radii <- scale_value*sqrt(tmp$value)
@@ -927,7 +926,8 @@ build_graph_vis <- function(related_cluster_input = NULL
                             , add_dashes = FALSE
                             , add_node_position = TRUE
                             , remvoe_empty_nodes = FALSE
-                            , selected_cluster = 3){
+                            , selected_cluster = 3
+                            , cluster_network_positions_file = "./data/cluster_network_positions.Rds"){
   # this function takes as an input a data.table with the cluster linkeages 
   # and produces a visNetwork plot
   
@@ -994,9 +994,11 @@ build_graph_vis <- function(related_cluster_input = NULL
   # start working on the network visualization
   if(add_node_position){
     # add x and y coordinates
-    size <- nrow(nodes)
-    nodes[, x := round(runif(size) * 1000)]
-    nodes[, y := round(runif(size) * 1000)]
+    # first read the file containing the positions of nodes
+    coords <- readRDS(cluster_network_positions_file)
+
+    nodes[, x := coords$x]
+    nodes[, y := coords$y]
   }
   
   # remove nodes with no connections
@@ -1008,9 +1010,6 @@ build_graph_vis <- function(related_cluster_input = NULL
   
   # selected_cluster <- edges[sample(unique(from), 1), from]
   selected_nodes <- c(selected_cluster, edges[from == selected_cluster, to])
-  
-  print(selected_cluster)
-  print(selected_nodes)
   
   p <- visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
     visNodes(size = 25, physics = F, fixed = F) %>%
