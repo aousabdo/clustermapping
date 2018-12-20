@@ -42,7 +42,6 @@ shinyServer(function(input, output) {
   })  
   
   region_clusters <- reactive({
-    foo <<- cluster_data()
     cluster_name  <- cluster_data()$related_clusters_dt$parent_cluster_name %>% unique() %>% as.character()
     region_type   <- regions_dt[region_short_name_t == input$region_name, region_type_t]
     region_clusters <- get_region_clusters(cluster = "all"
@@ -141,9 +140,11 @@ shinyServer(function(input, output) {
   }) 
   
   output$vizNetwork_advanced <- renderVisNetwork({
+    selected_cluster <- cluster_data()$related_clusters_dt$parent_cluster_code %>% unique()
     vis <- build_graph_vis(related_cluster_input = all_related_clusters
                            , clusters_avlbl_input = clusters_avlbl
                            , apply_filters = T
+                           , selected_cluster = selected_cluster
                            , cluster_network_positions_file = "./data/cluster_network_positions.Rds")[[3]]
   }) 
   

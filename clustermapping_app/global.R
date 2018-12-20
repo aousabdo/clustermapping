@@ -219,18 +219,6 @@ get_cluster_data <- function(strong_clusters_dt = NULL
       # we will only keep tightly related clusters, those for which related_i20_90_min == 1
       related_clusters_dt <- related_clusters_dt[related_i20_90_min == 1]
     }
-    # # do some data cleaning etc. 
-    # # list of numerical columns
-    # numeric_cols <- c("cluster_code_t", grep("related", names(related_clusters_dt), v = TRUE))
-    # 
-    # # convert all columns from lists to characters
-    # related_clusters_dt[, names(related_clusters_dt) := lapply(.SD, as.character)]
-    # 
-    # # convert the only character column to factor
-    # # related_clusters_dt[, cluster_name_t := factor(cluster_name_t)]
-    # 
-    # # now convert all numerical cols to numeric
-    # related_clusters_dt[, (numeric_cols) := lapply(.SD, as.numeric), .SDcols = numeric_cols]
     
     # add the parent cluster name and code
     related_clusters_dt[, parent_cluster_name := selected_cluster[, cluster_name]]
@@ -246,7 +234,18 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     # related_clusters_dt_out <<- related_clusters_dt[, .(parent_cluster_name, cluster_name_t, related_percentage)]
   } else{
     if(verbose) invisible(cat("\tThe cluster", selected_cluster_name, "has no related clusters\n"))
-    related_clusters_dt <- data.table()
+    related_clusters_dt <- data.table(parent_cluster_name = selected_cluster[, cluster_name])
+    related_clusters_dt[, parent_cluster_code := selected_cluster[, cluster_code]]
+    related_clusters_dt[, parent_cluster_short_name := selected_cluster[, cluster_short_name]]
+
+    related_clusters_dt[, cluster_name_t := NA]
+    related_clusters_dt[, cluster_code_t := NA]
+    related_clusters_dt[, related_90 := NA]
+    related_clusters_dt[, related_i20_90 := NA]
+    related_clusters_dt[, related_i20_90_min := NA]
+    related_clusters_dt[, related_percentage := NA]
+    related_clusters_dt[, related_avg := NA]
+    related_clusters_dt[, related_min := NA]
   }
   
   # get a list of industries, naics, by year
@@ -1013,7 +1012,7 @@ build_graph_vis <- function(related_cluster_input = NULL
     nodes_w_edges <- c(edges[, from], edges[, to]) %>% unique()
     nodes <- nodes[id %in% nodes_w_edges]
   }
-  if(!(selected_cluster %in% edges[, from])) {stop("Cluster selected is not in our database...\n")}
+  # if(!(selected_cluster %in% edges[, from])) {stop("Cluster selected is not in our database...\n")}
   
   # selected_cluster <- edges[sample(unique(from), 1), from]
   selected_nodes <- c(selected_cluster, edges[from == selected_cluster, to])
