@@ -993,11 +993,14 @@ build_graph_vis <- function(related_cluster_input = NULL
   
   setnames(nodes, c("id", names(nodes)[2:ncol(nodes)]))
   nodes[ , label := gsub(" \\& ", " ", label)]
+  nodes[ , label := gsub(" and ", "\n", label)]
   nodes[ , label := gsub(" ", "\n", label)]
   
   nodes[, title := paste0("<p><b>", label,"</b></p>") ]
   nodes[, shadows := TRUE]
   nodes[, shape := 'circle']
+  
+  # some necessary custom changes to make sure the nodes are esthetically clean and clear
   
   #==================================================================================================#
   #==================================================================================================#
@@ -1052,3 +1055,24 @@ build_graph_vis <- function(related_cluster_input = NULL
 #================================= End: build_graph_vis =================================#
 #========================================================================================#
 
+#========================================================================================#
+#================================== get_longest_string ==================================#
+#========================================================================================#
+get_longest_string <- function(x){
+  # Function to get the longest string in a character string vector
+  
+  # split string vector on new line or space
+  data <- unlist(str_split(x, "\n| ", n = Inf))
+  
+  # get the number of characters for all vector elements
+  index <- sapply(data, nchar)
+  
+  # keep the element with longest nchar
+  data <- data[which.max(index)]
+  
+  # return the number of characters in the longest element
+  return(as.integer(nchar(data)))
+}
+#========================================================================================#
+#================================ End: get_longest_string ===============================#
+#========================================================================================#
