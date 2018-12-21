@@ -1000,7 +1000,54 @@ build_graph_vis <- function(related_cluster_input = NULL
   nodes[, shadows := TRUE]
   nodes[, shape := 'circle']
   
+  #=====================================================================================#
+  #=====================================================================================#
+  #=====================================================================================#
   # some necessary custom changes to make sure the nodes are esthetically clean and clear
+  
+  # apply the get_longest_string function to get the number of characters in the label column row-wise
+  nodes[ , longest_nchar := sapply(label, function(x) get_longest_string(x))]
+  
+  # Now get the nuber of n_spaces, which is just the difference between the maximum number of characters
+  # for any row in label (this happens to be for connections) and the number of characters in the longest 
+  # element in a row label
+  nodes[ , n_spaces := max(longest_nchar) - longest_nchar]
+  
+  # we would like this number to be even, so we add 1 for odd cases of this n_spaces
+  nodes[(n_spaces %% 2) != 0, n_spaces := n_spaces + 1]
+  
+  # some custom, manual, interventions :)
+  # in somce cases we need to increase n_spaces to have a better looking node
+  
+  # n_spaces_8 means we will be adding 8 extra spaces to n_spaces, etc. 
+  n_spaces_inc_8 <- "^IT"
+  nodes[label %like% n_spaces_inc_8, n_spaces := n_spaces + 8]
+  
+  n_spaces_inc_4 <- "^Music|^Distri|^Light|^Water|^Business|^Furn|^Jewel|^Education|^Wood|^Appar|^Medica|^Leather|^Finan|^Hosp|^Market|^Footw|Metal\nMining"
+  nodes[label %like% n_spaces_inc_4, n_spaces := n_spaces + 4]
+  
+  n_spaces_inc_2 <- "^Automo|Nonmetal\nMining"
+  nodes[label %like% n_spaces_inc_2, n_spaces := n_spaces + 2]
+  
+  n_spaces_inc_6 <- "Fish|Oil|Coal|Texti|^Plastic|^Electric|^Printi|^Fores"
+  nodes[label %like% n_spaces_inc_6, n_spaces := n_spaces + 6]
+  
+  # now we need to split the label column in two since there are labels with 
+  # two names, i.e. Perfomring Arts 
+  nodes[, c("label_1", "label_2") := tstrsplit(label, "\n", fixed = T)]
+  
+  # now we need to add the spaces
+  nodes[nchar(label_1) >= nchar(label_2) | is.na(label_2), label_1 := paste0(strrep("_", n_spaces/2), label_1, strrep("_", n_spaces/2))]
+  nodes[nchar(label_2) > nchar(label_1), label_2 := paste0(strrep("_", n_spaces/2), label_2, strrep("_", n_spaces/2))]
+  
+  # and now we merge the labels again to give us the label column
+  nodes[ , label := ifelse(test = is.na(label_2), yes = label_1, no = paste(label_1, label_2, sep = " "))]
+  
+  # we need to convert the spaces to new lines
+  nodes[ , label := gsub(" ", "\n", label)]
+  
+  # and now convert the under scores to spaces
+  nodes[ , label := gsub("_", " ", label)]
   
   #==================================================================================================#
   #==================================================================================================#
@@ -1031,16 +1078,10 @@ build_graph_vis <- function(related_cluster_input = NULL
   p <- visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
     visNodes(size = 50
              , physics = FALSE
-             , fixed = TRUE) %>%
-    visOptions(highlightNearest = list(enabled = TRUE
-                                       , hover = TRUE
-                                       , degree = 1
-                                       , labelOnly = FALSE
-    ), 
-    nodesIdSelection = list(enabled = T
-                            , selected=selected_cluster)
-    , collapse = TRUE
-    )
+             , fixed = FALSE) %>%
+    visOptions(highlightNearest = list(enabled = TRUE, hover = TRUE, degree = 1, labelOnly = FALSE)
+               , nodesIdSelection = list(enabled = TRUE, selected=selected_cluster)
+               , collapse = TRUE)
   
   if(navigation_controls){
     p <- p %>% visInteraction(dragNodes = TRUE
