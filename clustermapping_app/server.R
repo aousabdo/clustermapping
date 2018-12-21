@@ -140,6 +140,7 @@ shinyServer(function(input, output) {
   }) 
   
   output$vizNetwork_advanced <- renderVisNetwork({
+    all_related_clusters <- get_all_related_clusters(clusters_list_input = clusters_list)
     selected_cluster <- cluster_data()$related_clusters_dt$parent_cluster_code %>% unique()
     vis <- build_graph_vis(related_cluster_input = all_related_clusters
                            , clusters_avlbl_input = clusters_avlbl
