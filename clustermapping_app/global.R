@@ -819,13 +819,15 @@ add_short_names <- function(clusters_dt = NULL
     try(tmp <- merge(tmp, tmp2, by.x = paste0(by_column, "_t"), by.y = by_column, TRUE))
   }
   
+  
+  # Some of the short names contain the & sign, this will cause us problems and we need to fix it
+  tmp[, cluster_short_name := gsub("\\&", "and", cluster_short_name)]
+  
+  tmp_out <<- copy(tmp)
   # change name of short column that we just added if user elected to do so
   if(!is.null(short_col_name)){
     setnames(tmp, names(tmp), c(names(tmp)[1:(ncol(tmp) - 1)], short_col_name))
   }
-  
-  # Some of the short names contsin the & sign, this will cause us problems and we need to fix it
-  tmp[, cluster_short_name := gsub("\\&", "and", cluster_short_name)]
   
   return(tmp)
 }
