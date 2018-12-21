@@ -7,21 +7,18 @@ nodes <- build_graph_vis(related_cluster_input = all_related_clusters
                          , clusters_avlbl_input = clusters_avlbl
                          , apply_filters = T)[[2]]
 
-# add x and y coordinates
-size <- nrow(nodes)
-nodes[, x := round(runif(size) * 1000)]
-nodes[, y := round(runif(size) * 1000)]
 
 # remove nodes with no connections
-nodes_w_edges <- c(edges[, from], edges[, to]) %>% unique()
-nodes <- nodes[id %in% nodes_w_edges]
+# nodes_w_edges <- c(edges[, from], edges[, to]) %>% unique()
+# nodes <- nodes[id %in% nodes_w_edges]
+# 
+# selected_cluster <- edges[sample(unique(from), 1), from]
+# selected_nodes <- c(selected_cluster, edges[from == selected_cluster, to])
+# 
+# print(selected_cluster)
+# print(selected_nodes)
 
-selected_cluster <- edges[sample(unique(from), 1), from]
-selected_nodes <- c(selected_cluster, edges[from == selected_cluster, to])
-
-print(selected_cluster)
-print(selected_nodes)
-
+nodes[, font.size := 5]
 
 visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
   # visIgraphLayout(layout = 'layout.davidson.harel') %>%
@@ -38,11 +35,11 @@ visNetwork(nodes, edges, height = "700px", width = "1000px") %>%
   )  %>% 
   visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE
                  , hoverConnectedEdges = T, navigationButtons = T) %>% 
-  visPhysics(repulsion = list(springlength = 50), # usually will take some tweaking
-             maxVelocity = 2,
-             solver = "forceAtlas2Based",
-             forceAtlas2Based = list(gravitationalConstant = -100),
-             timestep = 0.25)
+  # visPhysics(repulsion = list(springlength = 50), # usually will take some tweaking
+  #            maxVelocity = 2,
+  #            solver = "forceAtlas2Based",
+  #            forceAtlas2Based = list(gravitationalConstant = -100),
+  #            timestep = 0.25)
   print()
 
 visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
