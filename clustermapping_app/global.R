@@ -238,7 +238,7 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     related_clusters_dt <- data.table(parent_cluster_name = selected_cluster[, cluster_name])
     related_clusters_dt[, parent_cluster_code := selected_cluster[, cluster_code]]
     related_clusters_dt[, parent_cluster_short_name := selected_cluster[, cluster_short_name]]
-
+    
     related_clusters_dt[, cluster_name_t := NA]
     related_clusters_dt[, cluster_code_t := NA]
     related_clusters_dt[, related_90 := NA]
@@ -930,6 +930,7 @@ build_graph_vis <- function(related_cluster_input = NULL
                             , clusters_avlbl_input = clusters_avlbl
                             , apply_filters = TRUE
                             , add_dashes = FALSE
+                            , navigation_controls = FALSE
                             , add_node_position = TRUE
                             , remvoe_empty_nodes = FALSE
                             , selected_cluster = 3
@@ -1021,17 +1022,24 @@ build_graph_vis <- function(related_cluster_input = NULL
   selected_nodes <- c(selected_cluster, edges[from == selected_cluster, to])
   
   p <- visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
-    visNodes(size = 25, physics = F, fixed = TRUE) %>%
-    visOptions(highlightNearest = list(enabled = T, hover = T, degree=1
+    visNodes(size = 25, physics = FALSE, fixed = TRUE) %>%
+    visOptions(highlightNearest = list(enabled = TRUE
+                                       , hover = TRUE
+                                       , degree = 1
                                        , labelOnly = FALSE
     ), 
     nodesIdSelection = list(enabled = T
                             , selected=selected_cluster)
     , collapse = TRUE
-    )  %>% 
-    visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE
-                   , hoverConnectedEdges = T, navigationButtons = T)
+    )
   
+  if(navigation_controls){
+    p <- p %>% visInteraction(dragNodes = TRUE
+                              , dragView = TRUE
+                              , zoomView = TRUE
+                              , hoverConnectedEdges = TRUE
+                              , navigationButtons = TRUE)
+  }
   return(list(edges = edges, nodes = nodes, visGraph = p))
 }
 #========================================================================================#
