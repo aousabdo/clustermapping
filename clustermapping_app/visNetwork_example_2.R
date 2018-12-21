@@ -18,7 +18,7 @@ nodes <- build_graph_vis(related_cluster_input = all_related_clusters
 # print(selected_cluster)
 # print(selected_nodes)
 
-nodes[, font.size := 20]
+nodes[, font.size := 5]
 
 visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
   # visIgraphLayout(layout = 'layout.davidson.harel') %>%
