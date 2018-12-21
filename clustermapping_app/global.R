@@ -391,7 +391,7 @@ get_region_clusters <- function(cluster = NULL
                                 , cluster_selected = "all"
                                 , meta_data_list = meta_data
                                 , base_url = "http://54.83.53.228/data"
-                                , verbose = TRUE){
+                                , verbose = FALSE){
   
   # return cluster-level data including by range of years
   
