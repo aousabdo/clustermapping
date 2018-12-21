@@ -139,9 +139,15 @@ shinyServer(function(input, output) {
     network_viz()$vizNetwork_basic
   }) 
   
+  # final network visualization we will use
   output$vizNetwork_advanced <- renderVisNetwork({
+    # get table for all related clusters
     all_related_clusters <- get_all_related_clusters(clusters_list_input = clusters_list)
+    
+    # get the selected cluster by the user
     selected_cluster <- cluster_data()$related_clusters_dt$parent_cluster_code %>% unique()
+    
+    # build the network visulaization
     vis <- build_graph_vis(related_cluster_input = all_related_clusters
                            , clusters_avlbl_input = clusters_avlbl
                            , apply_filters = T
@@ -196,6 +202,10 @@ shinyServer(function(input, output) {
       visGetPositions()
   })
   
+  #=========================================================================#
+  #=========================================================================#
+  #=========================================================================#
+  # code to extract the positions of the nodes. This is a one-time thing
   vals <- reactiveValues(coords=NULL)
   
   observeEvent(input$getNodes, {
@@ -219,6 +229,10 @@ shinyServer(function(input, output) {
      saveRDS(coords_out, paste0("./data/cluster_network_positions_", gsub(" |:|-", "", Sys.time()), ".Rds"))
     return(coords)
   })
+  #=========================================================================#
+  #=========================================================================#
+  #=========================================================================#
+  
   #===================================================================================#
   #================================== End: Outputs ===================================#
   #===================================================================================#
