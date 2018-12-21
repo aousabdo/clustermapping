@@ -1,4 +1,5 @@
 source('global.R')
+all_related_clusters <- get_all_related_clusters(clusters_list_input = clusters_list)
 edges <- build_graph_vis(related_cluster_input = all_related_clusters
                          , clusters_avlbl_input = clusters_avlbl
                          , apply_filters = T)[[1]]
@@ -7,22 +8,33 @@ nodes <- build_graph_vis(related_cluster_input = all_related_clusters
                          , clusters_avlbl_input = clusters_avlbl
                          , apply_filters = T)[[2]]
 
-
+nodes[, shape := 'circle']
 # remove nodes with no connections
 # nodes_w_edges <- c(edges[, from], edges[, to]) %>% unique()
 # nodes <- nodes[id %in% nodes_w_edges]
 # 
-# selected_cluster <- edges[sample(unique(from), 1), from]
-# selected_nodes <- c(selected_cluster, edges[from == selected_cluster, to])
+selected_cluster <- edges[sample(unique(from), 1), from]
+selected_nodes <- c(selected_cluster, edges[from == selected_cluster, to])
 # 
 # print(selected_cluster)
 # print(selected_nodes)
 
-nodes[, font.size := 5]
+get_longest_string <- function(x){
+  data <- unlist(str_split(x, "\n| ", n = Inf))
+  index <- sapply(data, nchar)
+  data <- data[which.max(index)]
+  return(as.integer(nchar(data)))
+}
+
+# apply to nodes table
+nodes[ , longest_nchar := sapply(label, function(x) get_longest_string(x))]
+nodes[ , n_spaces := max(longest_nchar) - longest_nchar]
+nodes[(n_spaces %% 2) != 0, n_spaces := n_spaces + 1]
+nodes[, label := paste0(strrep("_", n_spaces/2), label, strrep("_", n_spaces/2))]
 
 visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
   # visIgraphLayout(layout = 'layout.davidson.harel') %>%
-  visNodes(size = 25, physics = F, fixed = F) %>%
+  visNodes(physics = F, fixed = F) %>%
   # visLayout(improvedLayout = T, randomSeed = 123) %>%
   visOptions(highlightNearest = list(enabled = T, hover = T, degree=1
                                      # , algorithm="hierarchical"
@@ -35,11 +47,6 @@ visNetwork(nodes, edges, height = "700px", width = "1000px") %>%
   )  %>% 
   visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE
                  , hoverConnectedEdges = T, navigationButtons = T) %>% 
-  # visPhysics(repulsion = list(springlength = 50), # usually will take some tweaking
-  #            maxVelocity = 2,
-  #            solver = "forceAtlas2Based",
-  #            forceAtlas2Based = list(gravitationalConstant = -100),
-  #            timestep = 0.25)
   print()
 
 visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 

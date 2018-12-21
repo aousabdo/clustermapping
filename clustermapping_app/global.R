@@ -990,10 +990,12 @@ build_graph_vis <- function(related_cluster_input = NULL
                            , short_col_name = "label")
   
   setnames(nodes, c("id", names(nodes)[2:ncol(nodes)]))
-  nodes[ , label := gsub("\\&", "and", label)]
+  nodes[ , label := gsub(" \\& ", " ", label)]
+  nodes[ , label := gsub(" ", "\n", label)]
   
   nodes[, title := paste0("<p><b>", label,"</b></p>") ]
   nodes[, shadows := TRUE]
+  nodes[, shape := 'circle']
   
   #==================================================================================================#
   #==================================================================================================#
@@ -1022,7 +1024,9 @@ build_graph_vis <- function(related_cluster_input = NULL
   selected_nodes <- c(selected_cluster, edges[from == selected_cluster, to])
   
   p <- visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
-    visNodes(size = 25, physics = FALSE, fixed = TRUE) %>%
+    visNodes(size = 50
+             , physics = FALSE
+             , fixed = TRUE) %>%
     visOptions(highlightNearest = list(enabled = TRUE
                                        , hover = TRUE
                                        , degree = 1
