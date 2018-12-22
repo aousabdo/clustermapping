@@ -936,6 +936,7 @@ build_graph_vis <- function(related_cluster_input = NULL
                             , add_node_position = TRUE
                             , remvoe_empty_nodes = FALSE
                             , selected_cluster = 3
+                            , visManipulation = FALSE
                             , cluster_network_positions_file = "./data/cluster_network_positions.Rds"){
   # this function takes as an input a data.table with the cluster linkeages 
   # and produces a visNetwork plot
@@ -1090,6 +1091,11 @@ build_graph_vis <- function(related_cluster_input = NULL
                               , hoverConnectedEdges = TRUE
                               , navigationButtons = TRUE)
   }
+  
+  if(visManipulation){
+    p <- p %>% visOptions(manipulation = TRUE)
+  }
+  
   nodes[, font.size := 50]
   return(list(edges = edges, nodes = nodes, visGraph = p))
 }

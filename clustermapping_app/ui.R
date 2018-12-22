@@ -18,6 +18,7 @@ shinyUI(fluidPage(
                                          , choices = meta_data$years_avlbl
                                          , selected = max(meta_data$years_avlbl))
                              , actionButton("getNodes", "Get nodes")
+                             , actionButton("getEdges", "Get Edges")
                 ),
                 
                 # Show a plot of the generated distribution
@@ -27,7 +28,7 @@ shinyUI(fluidPage(
                            , hr()
                            , plotly::plotlyOutput("strong_clusters_plot", height = "auto")
                            , plotly::plotlyOutput("combined_plots_1", height = "auto", width = "1400px")
-                           , visNetworkOutput("vizNetwork_advanced", height = "800px", width = "1000px")
+                           # , visNetworkOutput("vizNetwork_advanced", height = "800px", width = "1000px")
                            # , DT::dataTableOutput("strong_clusters")
                            # , sankeyNetworkOutput("sankeyNetwork_Viz")
                            # , visNetworkOutput("vizNetwork_basic")
@@ -48,10 +49,11 @@ shinyUI(fluidPage(
                            shiny::dataTableOutput("industries")
                            # , forceNetworkOutput("forceNetwork_Viz")
                   ) 
-                  # , tabPanel("test"
-                  #            , visNetworkOutput("vizNetwork_advanced", height = "800px", width = "1000px")
-                  #            , dataTableOutput("test2")
-                  #          )
+                  , tabPanel("test"
+                             , visNetworkOutput("vizNetwork_advanced", height = "800px", width = "1000px")
+                             , dataTableOutput("test2")
+                             ,   verbatimTextOutput("edges_data_from_shiny_text")
+                           )
                   ))
   )
 ))

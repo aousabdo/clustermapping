@@ -189,17 +189,6 @@ shinyServer(function(input, output) {
     )
   })
   
-  # output$network <- renderVisNetwork({
-  #   nodes <- data.frame(id = 1:3); edges <- data.frame(from = c(1,2), to = c(1,3))
-  #   visNetwork(nodes, edges) %>% visNodes(color = "green")
-  # })
-# 
-#   observe({
-#     input$getNodes
-#     visNetworkProxy("vizNetwork_advanced") %>%
-#       visGetPositions()
-#   })
-#   
   #=========================================================================#
   #=========================================================================#
   #=========================================================================#
@@ -222,7 +211,18 @@ shinyServer(function(input, output) {
     return(coords)
   })
   
+  output$edges_data_from_shiny_text <- renderPrint({
+    if(!is.null(input$vizNetwork_advanced_edges)){
+      edge_data <- input$vizNetwork_advanced_edges
+      saveRDS(edge_data, paste0("./data/cluster_edges_data_", gsub(" |:|-", "", Sys.time()), ".Rds"))
+      input$vizNetwork_advanced_edges
+    }
+  })
   
+  observeEvent(input$getEdges, {
+    visNetworkProxy("vizNetwork_advanced") %>%
+      visGetEdges()
+  })
   
   #=========================================================================#
   #=========================================================================#
