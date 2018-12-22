@@ -1023,7 +1023,7 @@ build_graph_vis <- function(related_cluster_input = NULL
   n_spaces_inc_8 <- "^IT"
   nodes[label %like% n_spaces_inc_8, n_spaces := n_spaces + 8]
   
-  n_spaces_inc_4 <- "^Music|^Distri|^Light|^Water|^Business|^Furn|^Jewel|^Education|^Wood|^Appar|^Medica|^Leather|^Finan|^Hosp|^Market|^Footw|Metal\nMining"
+  n_spaces_inc_4 <- "^Music|^Distri|^Light|^Water|^Business|^Furn|^Jewel|^Education|^Wood|^Appar|^Medica|^Leather|^Finan|^Hosp|^Market|^Footw|Metal\nMining|^Vulc|^Live|^Agric|^Toba|^Insu"
   nodes[label %like% n_spaces_inc_4, n_spaces := n_spaces + 4]
   
   n_spaces_inc_2 <- "^Automo|Nonmetal\nMining"
@@ -1090,6 +1090,7 @@ build_graph_vis <- function(related_cluster_input = NULL
                               , hoverConnectedEdges = TRUE
                               , navigationButtons = TRUE)
   }
+  nodes[, font.size := 50]
   return(list(edges = edges, nodes = nodes, visGraph = p))
 }
 #========================================================================================#
