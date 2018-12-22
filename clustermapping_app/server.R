@@ -152,6 +152,7 @@ shinyServer(function(input, output) {
                            , clusters_avlbl_input = clusters_avlbl
                            , apply_filters = T
                            , selected_cluster = selected_cluster
+                           , visManipulation = TRUE
                            , cluster_network_positions_file = "./data/cluster_network_positions.Rds")[[3]]
   }) 
   
@@ -215,12 +216,6 @@ shinyServer(function(input, output) {
     }
   })
 
-  output$test <- renderPrint({
-    vals$coords
-    coords <- vals$coords
-    vals$coords
-    })
-  
   output$test2 <- renderDataTable({
     coords <- vals$coords %>% as.data.table()
      coords_out <- copy(coords)
@@ -229,6 +224,9 @@ shinyServer(function(input, output) {
      saveRDS(coords_out, paste0("./data/cluster_network_positions_", gsub(" |:|-", "", Sys.time()), ".Rds"))
     return(coords)
   })
+  
+  
+  
   #=========================================================================#
   #=========================================================================#
   #=========================================================================#
