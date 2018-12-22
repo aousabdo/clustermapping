@@ -189,20 +189,17 @@ shinyServer(function(input, output) {
     )
   })
   
-  output$network <- renderVisNetwork({
-    nodes <- data.frame(id = 1:3); edges <- data.frame(from = c(1,2), to = c(1,3))
-    visNetwork(nodes, edges) %>% visNodes(color = "green")
-  })
-  # output$test <- renderPrint({
-  #   input$vizNetwork_advanced_positions
+  # output$network <- renderVisNetwork({
+  #   nodes <- data.frame(id = 1:3); edges <- data.frame(from = c(1,2), to = c(1,3))
+  #   visNetwork(nodes, edges) %>% visNodes(color = "green")
   # })
-  
-  observe({
-    input$getNodes
-    visNetworkProxy("vizNetwork_advanced") %>%
-      visGetPositions()
-  })
-  
+# 
+#   observe({
+#     input$getNodes
+#     visNetworkProxy("vizNetwork_advanced") %>%
+#       visGetPositions()
+#   })
+#   
   #=========================================================================#
   #=========================================================================#
   #=========================================================================#
