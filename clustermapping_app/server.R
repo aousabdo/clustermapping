@@ -210,7 +210,7 @@ shinyServer(function(input, output) {
      saveRDS(coords_out, paste0("./data/cluster_network_positions_", gsub(" |:|-", "", Sys.time()), ".Rds"))
     return(coords)
   })
-  
+         
   output$edges_data_from_shiny_text <- renderPrint({
     if(!is.null(input$vizNetwork_advanced_edges)){
       edge_data <- input$vizNetwork_advanced_edges
