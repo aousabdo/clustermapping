@@ -937,7 +937,9 @@ build_graph_vis <- function(related_cluster_input = NULL
                             , remvoe_empty_nodes = FALSE
                             , selected_cluster = 3
                             , visManipulation = FALSE
-                            , cluster_network_positions_file = "./data/cluster_network_positions.Rds"){
+                            , cluster_network_positions_file = "./data/cluster_network_positions.Rds"
+                            , add_custom_edges = TRUE
+                            , custom_edges_file = "./data/cluster_edges.Rds"){
   # this function takes as an input a data.table with the cluster linkeages 
   # and produces a visNetwork plot
   
@@ -979,9 +981,34 @@ build_graph_vis <- function(related_cluster_input = NULL
   # dark-color edge connection: if the BCR >= 95th percentile & RI >= 20%
   # light-color edge connection: if the BCR in the 90-94 percentile & RI >= 20%
   edges[, width := ifelse(related_percentage >= 95, 3, 1)]
+  edges[, dashes := FALSE]
   if(add_dashes) edges[, dashes := ifelse(related_percentage >= 95, FALSE, TRUE)]
   edges[, color := ifelse(related_percentage >= 95, "steelblue", "steelblue")]
   
+  # add custom edges 
+  if(add_custom_edges){
+    # check to make sure the custom edges files exists
+    if(!file.exists(custom_edges_file)) stop("\tCustom edges file doesn't exist, qutting...\n")
+    else{edges_data <- readRDS(custom_edges_file)}
+  
+    # the custom edges file contain all edges
+    # we only need the from and to since we'll merge this file with the edges table we already have
+    from <- sapply(edges_data, function(x) x$from)
+    to   <- sapply(edges_data, function(x) x$to)
+    
+    edges_tmp <- data.table(from, to)
+    
+    # now merge the two tables on the two columns, from and to, and keep all rows with all = TRUE
+    edges_tmp <- merge(edges, edges_tmp, by = c("from", "to"), all = TRUE)
+    
+    # now we need to set the dashes to TRUE for the new edges
+    
+    edges_tmp[is.na(dashes), dashes := TRUE]
+    edges_tmp[is.na(dashes), width := 1]
+    edges_tmp[is.na(dashes), color := "black"]
+    edges_out <<- copy(edges_tmp)
+    edges <- copy(edges_tmp)
+  }
   # work on the nodes now
   IDs <- related_cluster_input[, unique(parent_cluster_code)]
   
