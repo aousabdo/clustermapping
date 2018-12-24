@@ -1008,7 +1008,7 @@ build_graph_vis <- function(related_cluster_input = NULL
     
     edges_tmp[is.na(dashes), dashes := TRUE]
     edges_tmp[is.na(parent_cluster_name), width := 1]
-    edges_tmp[is.na(parent_cluster_name), color := "grey30"]
+    # edges_tmp[is.na(parent_cluster_name), color := "grey30"]
 
     # now copy the new edges table to be used in our plots
     edges <- copy(edges_tmp)
@@ -1054,16 +1054,16 @@ build_graph_vis <- function(related_cluster_input = NULL
   # in somce cases we need to increase n_spaces to have a better looking node
   
   # n_spaces_8 means we will be adding 8 extra spaces to n_spaces, etc. 
-  n_spaces_inc_8 <- "^IT"
+  n_spaces_inc_8 <- "^IT|^Texti"
   nodes[label %like% n_spaces_inc_8, n_spaces := n_spaces + 8]
   
-  n_spaces_inc_4 <- "^Music|^Distri|^Light|^Water|^Business|^Furn|^Jewel|^Education|^Wood|^Appar|^Medica|^Leather|^Finan|^Hosp|^Market|^Footw|Metal\nMining|^Vulc|^Live|^Agric|^Toba|^Insu"
+  n_spaces_inc_4 <- "^Distri|^Light|^Water|^Business|^Furn|^Jewel|^Education|^Wood|^Appar|^Medica|^Leather|^Finan|^Hosp|^Market|^Footw|Metal\nMining|^Vulc|^Live|^Agric|^Toba|^Insu|^Production|^Trailer|^Upstream|^Food|^Paper|^Appa|^Performing|^Video|^Constru"
   nodes[label %like% n_spaces_inc_4, n_spaces := n_spaces + 4]
   
-  n_spaces_inc_2 <- "^Automo|Nonmetal\nMining"
+  n_spaces_inc_2 <- "^Automo|Nonmetal\nMining|^Transpo"
   nodes[label %like% n_spaces_inc_2, n_spaces := n_spaces + 2]
   
-  n_spaces_inc_6 <- "Fish|Oil|Coal|Texti|^Plastic|^Electric|^Printi|^Fores"
+  n_spaces_inc_6 <- "^Music|^Fish|Oil|Coal|^Plastic|^Electric|^Printi|^Fores"
   nodes[label %like% n_spaces_inc_6, n_spaces := n_spaces + 6]
   
   # now we need to split the label column in two since there are labels with 
