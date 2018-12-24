@@ -1057,7 +1057,7 @@ build_graph_vis <- function(related_cluster_input = NULL
   n_spaces_inc_8 <- "^IT|^Texti"
   nodes[label %like% n_spaces_inc_8, n_spaces := n_spaces + 8]
   
-  n_spaces_inc_4 <- "^Distri|^Light|^Water|^Business|^Furn|^Jewel|^Education|^Wood|^Appar|^Medica|^Leather|^Finan|^Hosp|^Market|^Footw|Metal\nMining|^Vulc|^Live|^Agric|^Toba|^Insu|^Production|^Trailer|^Upstream|^Food|^Paper|^Appa|^Performing|^Video|^Constru"
+  n_spaces_inc_4 <- "^Distri|^Light|^Water|^Business|^Furn|^Jewel|^Education|^Wood|^Appar|^Medica|^Leather|^Finan|^Hosp|^Market|^Footw|Metal\nMining|^Vulc|^Live|^Agric|^Toba|^Insu|^Production|^Trailer|^Upstream|^Food|^Paper|^Appa|^Performing|^Video|^Constru|^Recrea"
   nodes[label %like% n_spaces_inc_4, n_spaces := n_spaces + 4]
   
   n_spaces_inc_2 <- "^Automo|Nonmetal\nMining|^Transpo"
