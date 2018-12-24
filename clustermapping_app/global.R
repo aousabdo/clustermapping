@@ -981,7 +981,10 @@ build_graph_vis <- function(related_cluster_input = NULL
   # dark-color edge connection: if the BCR >= 95th percentile & RI >= 20%
   # light-color edge connection: if the BCR in the 90-94 percentile & RI >= 20%
   edges[, width := ifelse(related_percentage >= 95, 3, 1)]
+  
+  # add dashes column by default, and default it to FALSE
   edges[, dashes := FALSE]
+  
   if(add_dashes) edges[, dashes := ifelse(related_percentage >= 95, FALSE, TRUE)]
   edges[, color := ifelse(related_percentage >= 95, "steelblue", "steelblue")]
   
@@ -1004,11 +1007,14 @@ build_graph_vis <- function(related_cluster_input = NULL
     # now we need to set the dashes to TRUE for the new edges
     
     edges_tmp[is.na(dashes), dashes := TRUE]
-    edges_tmp[is.na(dashes), width := 1]
-    edges_tmp[is.na(dashes), color := "black"]
-    edges_out <<- copy(edges_tmp)
+    edges_tmp[is.na(parent_cluster_name), width := 1]
+    edges_tmp[is.na(parent_cluster_name), color := "grey30"]
+
+    # now copy the new edges table to be used in our plots
     edges <- copy(edges_tmp)
+    edges_out <<- copy(edges)
   }
+  
   # work on the nodes now
   IDs <- related_cluster_input[, unique(parent_cluster_code)]
   
