@@ -1113,7 +1113,7 @@ build_graph_vis <- function(related_cluster_input = NULL
   
   p <- visNetwork(nodes, edges, height = "700px", width = "1000px"
                   , main = "Cluster Linkages"
-                  , submain = paste(region_name, year_selected, sep = ",")) %>% 
+                  , submain = paste(region_name, year_selected, sep = ", ")) %>% 
     visNodes(size = 50
              , physics = FALSE
              , fixed = TRUE) %>%
