@@ -27,7 +27,7 @@ shinyUI(fluidPage(
                            h1(textOutput("text_1"))
                            , hr()
                            , plotly::plotlyOutput("strong_clusters_plot", height = "auto")
-                           , visNetworkOutput("vizNetwork_advanced", height = "800px", width = "1000px")
+                           , visNetworkOutput("vizNetwork_advanced", height = "900px", width = "1000px")
                            , plotly::plotlyOutput("combined_plots_1", height = "auto", width = "1400px")
                            # , DT::dataTableOutput("strong_clusters")
                            # , sankeyNetworkOutput("sankeyNetwork_Viz")
