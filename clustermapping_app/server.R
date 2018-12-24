@@ -153,7 +153,8 @@ shinyServer(function(input, output) {
                            , apply_filters = T
                            , selected_cluster = selected_cluster
                            , visManipulation = F
-                           , cluster_network_positions_file = "./data/cluster_network_positions.Rds")[[3]]
+                           , cluster_network_positions_file = "./data/cluster_network_positions.Rds"
+                           , region_name = input$region_name)[[3]]
   }) 
   
   output$forceNetwork_Viz <- renderForceNetwork({

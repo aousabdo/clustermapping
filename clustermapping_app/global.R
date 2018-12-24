@@ -939,7 +939,9 @@ build_graph_vis <- function(related_cluster_input = NULL
                             , visManipulation = FALSE
                             , cluster_network_positions_file = "./data/cluster_network_positions.Rds"
                             , add_custom_edges = TRUE
-                            , custom_edges_file = "./data/cluster_edges.Rds"){
+                            , custom_edges_file = "./data/cluster_edges.Rds"
+                            , region_name = NULL
+                            , year_selected = 2016){
   # this function takes as an input a data.table with the cluster linkeages 
   # and produces a visNetwork plot
   
@@ -1109,7 +1111,9 @@ build_graph_vis <- function(related_cluster_input = NULL
   # selected_cluster <- edges[sample(unique(from), 1), from]
   selected_nodes <- c(selected_cluster, edges[from == selected_cluster, to])
   
-  p <- visNetwork(nodes, edges, height = "700px", width = "1000px") %>% 
+  p <- visNetwork(nodes, edges, height = "700px", width = "1000px"
+                  , main = "Cluster Linkages"
+                  , submain = paste(region_name, year_selected, sep = ",")) %>% 
     visNodes(size = 50
              , physics = FALSE
              , fixed = FALSE) %>%
