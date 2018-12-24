@@ -1116,7 +1116,7 @@ build_graph_vis <- function(related_cluster_input = NULL
                   , submain = paste(region_name, year_selected, sep = ",")) %>% 
     visNodes(size = 50
              , physics = FALSE
-             , fixed = FALSE) %>%
+             , fixed = TRUE) %>%
     visOptions(highlightNearest = list(enabled = TRUE, hover = TRUE, degree = 1, labelOnly = FALSE)
                , nodesIdSelection = list(enabled = TRUE, selected=selected_cluster)
                , collapse = TRUE)
