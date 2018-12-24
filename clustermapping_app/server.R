@@ -152,7 +152,7 @@ shinyServer(function(input, output) {
                            , clusters_avlbl_input = clusters_avlbl
                            , apply_filters = T
                            , selected_cluster = selected_cluster
-                           , visManipulation = TRUE
+                           , visManipulation = F
                            , cluster_network_positions_file = "./data/cluster_network_positions.Rds")[[3]]
   }) 
   
