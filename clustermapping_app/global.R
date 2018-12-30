@@ -1117,7 +1117,7 @@ build_graph_vis <- function(related_cluster_input = NULL
     visNodes(size = 50
              , physics = FALSE
              , fixed = TRUE) %>%
-    visOptions(highlightNearest = list(enabled = TRUE, hover = TRUE, degree = 1, labelOnly = FALSE)
+    visOptions(highlightNearest = list(enabled = TRUE, hover = TRUE, degree = 1, labelOnly = FALSE, algorithm="hierarchical")
                , nodesIdSelection = list(enabled = TRUE, selected=selected_cluster)
                , collapse = TRUE)
   
