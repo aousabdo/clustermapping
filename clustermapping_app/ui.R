@@ -9,7 +9,7 @@ shinyUI(fluidPage(
   
   # Sidebar with a slider input for number of bins 
   sidebarLayout(fluid = TRUE, 
-                sidebarPanel(width= 2,
+                sidebarPanel(width = 2,
                              selectInput(inputId = "region_name"
                                          , label = "Select a Region"
                                          , choices = region_names), 
@@ -38,6 +38,7 @@ shinyUI(fluidPage(
                            , br()
                            , br()
                            , br()
+                           , plotly::plotlyOutput("donut_chart")
                            , plotly::plotlyOutput("combined_plots_1", height = "auto", width = "1400px")
                            # , DT::dataTableOutput("strong_clusters")
                            # , sankeyNetworkOutput("sankeyNetwork_Viz")

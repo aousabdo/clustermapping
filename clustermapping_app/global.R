@@ -575,7 +575,9 @@ build_cluster_plots <- function(region_clusters_dt = NULL
     group_by(cluster_type) %>%
     summarise(count = n()) %>%
     plot_ly(labels = ~ cluster_type, values = ~ count) %>%
-    add_pie(hole = 0.6, domain = list(x = c(0, 0.5), y = c(0, 0.9))) %>%
+    add_pie(hole = 0.6
+            # , domain = list(x = c(0, 0.5), y = c(0, 0.9))
+            ) %>%
     layout(title = paste0("\nTraded vs. Local Clusters, ", year_selected),  showlegend = T,
            xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
            yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
