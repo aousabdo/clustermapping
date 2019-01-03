@@ -125,7 +125,13 @@ shinyServer(function(input, output) {
   output$donut_chart <- plotly::renderPlotly(cluster_plots()$donut_chart)
   donut_chart <- reactive({cluster_plots()$donut_chart})
   
-  output$cluster_emp <- plotly::renderPlotly({
+  output$cluster_emp_plot <- plotly::renderPlotly({
+    # s <- event_data("plotly_click", source = "barplot")
+    # print(as.list(s))
+    cluster_plots()$cluster_emp
+  })
+  
+  output$cluster_emp_plot_2 <- plotly::renderPlotly({
     # s <- event_data("plotly_click", source = "barplot")
     # print(as.list(s))
     cluster_plots()$cluster_emp

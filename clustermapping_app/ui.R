@@ -23,8 +23,8 @@ shinyUI(fluidPage(
                 
                 # Show a plot of the generated distribution
                 mainPanel(tabsetPanel(
-                  tabPanel("Related Clusters",
-                           h1(textOutput("text_1"))
+                  tabPanel("Related Clusters"
+                           , h1(textOutput("text_1"))
                            , br()
                            , br()
                            , br()
@@ -39,7 +39,11 @@ shinyUI(fluidPage(
                            , br()
                            , br()
                            , plotly::plotlyOutput("donut_chart")
-                           , plotly::plotlyOutput("combined_plots_1", height = "auto", width = "1400px")
+                           , plotly::plotlyOutput("cluster_emp_plot")
+                           # , splitLayout(plotlyOutput("donut_chart")
+                           #               , plotlyOutput("cluster_emp_plot")
+                           #               , cellWidths = c("50%", "50%"))
+                           # , plotly::plotlyOutput("combined_plots_1", height = "auto", width = "1200")
                            # , DT::dataTableOutput("strong_clusters")
                            # , sankeyNetworkOutput("sankeyNetwork_Viz")
                            # , visNetworkOutput("vizNetwork_basic")
@@ -48,7 +52,7 @@ shinyUI(fluidPage(
                   ),
                   tabPanel("Region Figures"
                            # , plotly::plotlyOutput("donut_chart", width = "500px", height = "500px")
-                           , plotly::plotlyOutput("cluster_emp", width = "1000px", height = "600px")
+                           , plotly::plotlyOutput("cluster_emp_plot_2", width = "1000px", height = "600px")
                            # , verbatimTextOutput("selection")
                            , plotly::plotlyOutput("cluster_wages", width = "1000px", height = "600px")
                            , plotly::plotlyOutput("cluster_job_creation", width = "1000px", height = "1000px")
@@ -65,6 +69,6 @@ shinyUI(fluidPage(
                   #            , dataTableOutput("test2")
                   #            ,   verbatimTextOutput("edges_data_from_shiny_text")
                   #          )
-                  ))
+                ))
   )
 ))

@@ -577,7 +577,11 @@ build_cluster_plots <- function(region_clusters_dt = NULL
     plot_ly(labels = ~ cluster_type, values = ~ count) %>%
     add_pie(hole = 0.6
             # , domain = list(x = c(0, 0.5), y = c(0, 0.9))
-            ) %>%
+            )
+  
+  p1_out <<- p1
+  
+  p1 <- p1 %>%
     layout(title = paste0("\nTraded vs. Local Clusters, ", year_selected),  showlegend = T,
            xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
            yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
@@ -593,11 +597,16 @@ build_cluster_plots <- function(region_clusters_dt = NULL
                 , type = 'bar'
                 , orientation = "h"
                 , source = "barplot"
-                , color = I("steelblue")) %>%
+                , color = I("steelblue")) 
+  
+  p2_out <<- p2
+  
+  p2 <- p2 %>%
     layout(title = paste0("\nEmployment by Traded Cluster, ", year_selected, "\n"),  
            xaxis = list(title = paste0("Employment, ", year_selected), showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
            yaxis = list(title = "",showgrid = FALSE, zeroline = TRUE, showticklabels = TRUE),
            margin = list(l = 350, r = 50, b = 50, t = 50, pad = 4))
+  
   p2 <- hide_legend(p2)
   
   p3 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE] 
