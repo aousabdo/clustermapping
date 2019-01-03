@@ -1,6 +1,3 @@
-library(shiny)
-library(DT)
-
 # start with a clean slate as always
 rm(list = ls())
 
@@ -14,26 +11,42 @@ shinyServer(function(input, output) {
   #================================ Reactive Functions ===============================#
   #===================================================================================#
   # declare and build some reactive functions that we'll use later 
-  strong_clusters_dt <- reactive({
-    # call the function that gets the strong clusters for a given region and year
+  
+  strong_clusters_fun <- reactive({
+    # this reactive function calls the function that gets the strong clusters for a given region and year
     get_strong_clusters(region_name = input$region_name
                         , regions_dt = regions_dt
                         , year_selected = input$year
                         , meta_data_list = meta_data)
   })
   
-  cluster_data <- reactive({
-    strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
+  cluster_data_fun <- reactive({
+    # reactive function to call the get_cluster_data for a given cluster
+    
+    # get strong clusters 
+    strong_clusters <- strong_clusters_fun()[["strong_clusters"]]
     strong_clusters_out <<- copy(strong_clusters)
     
     # if the user hasn't yet selected a cluster, pick the first one
     if(is.null(input$strong_clusters_rows_selected)) strong_clusters_rows_selected <- 1
     else strong_clusters_rows_selected <- input$strong_clusters_rows_selected
     
+    # get the cluster the user clicks on from the strong cluster barplot
     s <- event_data("plotly_click", source = "strong_clusters_barplot")
+    s_out <<- s
     
+    # if the user hasn't selected a cluster yet, just return the first cluster
+    # in the strong cluster barplot for that region, otherwise return cluster 
+    # selected by the user
     if(is.null(s)) strong_clusters_rows_selected <- 1
     else strong_clusters_rows_selected <- s$pointNumber + 1
+    
+    strong_clusters_rows_selected_out <<- strong_clusters_rows_selected
+    print(cat("\n1111111111111111111111111111111111111111111"))
+    print(strong_clusters_rows_selected)
+    print(Sys.time())
+    print(cat("2222222222222222222222222222222222222222222\n"))
+    clusters_list_out <<- clusters_list
     
     # call the function that gets the cluster data
     get_cluster_data(strong_clusters_dt = strong_clusters
@@ -42,27 +55,27 @@ shinyServer(function(input, output) {
   })  
   
   region_clusters <- reactive({
-    cluster_name  <- cluster_data()$related_clusters_dt$parent_cluster_name %>% unique() %>% as.character()
-    region_type   <- regions_dt[region_short_name_t == input$region_name, region_type_t]
-    region_clusters <- get_region_clusters(cluster = "all"
-                                           , region_name = input$region_name
-                                           , region_type = region_type
-                                           , regions_dt = regions_dt
-                                           , year_selected = "all"
-                                           , cluster_selected = "all"
-                                           , meta_data_list = meta_data)
-    return(region_clusters)
+    cluster_name       <- cluster_data_fun()$related_clusters_dt$parent_cluster_name %>% unique() %>% as.character()
+    region_type        <- regions_dt[region_short_name_t == input$region_name, region_type_t]
+    region_clusters_dt <- get_region_clusters(cluster = "all"
+                                              , region_name = input$region_name
+                                              , region_type = region_type
+                                              , regions_dt = regions_dt
+                                              , year_selected = "all"
+                                              , cluster_selected = "all"
+                                              , meta_data_list = meta_data)
+    return(region_clusters_dt)
   })
   
   cluster_plots <- reactive({
-    region_clusters <- region_clusters()
+    region_clusters_dt <- region_clusters()
     
     # add short names
-    region_clusters <- add_short_names(clusters_dt = region_clusters
-                                       , clusters_list_input = clusters_list
-                                       , by_column = "cluster_code")
+    region_clusters_dt <- add_short_names(clusters_dt = region_clusters_dt
+                                          , clusters_list_input = clusters_list
+                                          , by_column = "cluster_code")
     
-    build_cluster_plots(region_clusters_dt = region_clusters
+    build_cluster_plots(region_clusters_dt = region_clusters_dt
                         , N_top_clusters = 10
                         , year_selected = 2016
                         , traded_only = F
@@ -78,7 +91,7 @@ shinyServer(function(input, output) {
   
   network_viz <- reactive({
     # call the function which builds the network visulizations
-    cluster_data <- cluster_data()
+    cluster_data <- cluster_data_fun()
     
     cluster_data_out <<- copy(cluster_data)
     # don't return an error if there is no data in the related clusters table
@@ -86,8 +99,8 @@ shinyServer(function(input, output) {
     build_network_viz(cluster_data = cluster_data)
   })
   
-  strong_clusters_plot <- reactive({
-    strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
+  strong_clusters_plot_fun <- reactive({
+    strong_clusters <- strong_clusters_fun()[["strong_clusters"]]
     
     # strong_clusters[, cluster_name_2 := paste0(cluster_name, ", Rank: ", cluster_pos)]
     # It is better to use the short names since it will help us with the real-estate on the plots
@@ -112,7 +125,7 @@ shinyServer(function(input, output) {
   #===================================== Outputs =====================================#
   #===================================================================================#
   output$text_1 <- renderText({ 
-    is_strong_cluster <- strong_clusters_dt()[["is_strong_cluster"]]
+    is_strong_cluster <- strong_clusters_fun()[["is_strong_cluster"]]
     if(is_strong_cluster) {
       paste0("Strong Clusters in ", input$region_name, ", ", input$year)
     }else{
@@ -151,7 +164,9 @@ shinyServer(function(input, output) {
     all_related_clusters <- get_all_related_clusters(clusters_list_input = clusters_list)
     
     # get the selected cluster by the user
-    selected_cluster <- cluster_data()$related_clusters_dt$parent_cluster_code %>% unique()
+    selected_cluster <- cluster_data_fun()$related_clusters_dt$parent_cluster_code %>% unique()
+    # print(cluster_data_fun()$related_clusters_dt$parent_cluster_name %>% unique())
+    # print(selected_cluster)
     
     # build the network visulaization
     vis <- build_graph_vis(related_cluster_input = all_related_clusters
@@ -172,21 +187,21 @@ shinyServer(function(input, output) {
   })
   
   output$strong_clusters <- DT::renderDataTable(expr = {
-    strong_clusters <- strong_clusters_dt()[["strong_clusters"]]
+    strong_clusters <- strong_clusters_fun()[["strong_clusters"]]
     strong_clusters[, .(cluster_name, emp_tl)]
   }, server = FALSE, selection = 'single')
   
   
   output$strong_clusters_plot <- plotly::renderPlotly({
-    strong_clusters_plot()
+    strong_clusters_plot_fun()
   })
   output$related_clusters <- shiny::renderDataTable({
-    cluster_data()$related_clusters_dt
+    cluster_data_fun()$related_clusters_dt
   })
   
-  output$sub_clusters <- shiny::renderDataTable({cluster_data()$sub_clusters_dt})
+  output$sub_clusters <- shiny::renderDataTable({cluster_data_fun()$sub_clusters_dt})
   
-  output$industries <- shiny::renderDataTable({cluster_data()$industries})
+  output$industries <- shiny::renderDataTable({cluster_data_fun()$industries})
   
   output$combined_plots_1 <- plotly::renderPlotly({
     p <- plotly::subplot(nrows = 1
@@ -208,16 +223,16 @@ shinyServer(function(input, output) {
       do.call(rbind, input$vizNetwork_advanced_positions)
     }
   })
-
+  
   output$test2 <- renderDataTable({
     coords <- vals$coords %>% as.data.table()
-     coords_out <- copy(coords)
-     coords_out[, x := as.integer(x)]
-     coords_out[, y := as.integer(y)]
-     saveRDS(coords_out, paste0("./data/cluster_network_positions_", gsub(" |:|-", "", Sys.time()), ".Rds"))
+    coords_out <- copy(coords)
+    coords_out[, x := as.integer(x)]
+    coords_out[, y := as.integer(y)]
+    saveRDS(coords_out, paste0("./data/cluster_network_positions_", gsub(" |:|-", "", Sys.time()), ".Rds"))
     return(coords)
   })
-         
+  
   output$edges_data_from_shiny_text <- renderPrint({
     if(!is.null(input$vizNetwork_advanced_edges)){
       edge_data <- input$vizNetwork_advanced_edges
