@@ -22,7 +22,7 @@ shinyServer(function(input, output) {
   
   cluster_data_fun <- reactive({
     # reactive function to call the get_cluster_data for a given cluster
-    
+  
     # get strong clusters 
     strong_clusters <- strong_clusters_fun()[["strong_clusters"]]
     strong_clusters_out <<- copy(strong_clusters)
@@ -30,23 +30,23 @@ shinyServer(function(input, output) {
     # if the user hasn't yet selected a cluster, pick the first one
     if(is.null(input$strong_clusters_rows_selected)) strong_clusters_rows_selected <- 1
     else strong_clusters_rows_selected <- input$strong_clusters_rows_selected
-    
+
     # get the cluster the user clicks on from the strong cluster barplot
     s <- event_data("plotly_click", source = "strong_clusters_barplot")
-    s_out <<- s
+
     
     # if the user hasn't selected a cluster yet, just return the first cluster
     # in the strong cluster barplot for that region, otherwise return cluster 
     # selected by the user
+
     if(is.null(s)) strong_clusters_rows_selected <- 1
     else strong_clusters_rows_selected <- s$pointNumber + 1
-    
-    strong_clusters_rows_selected_out <<- strong_clusters_rows_selected
-    print(cat("\n1111111111111111111111111111111111111111111"))
-    print(strong_clusters_rows_selected)
-    print(Sys.time())
-    print(cat("2222222222222222222222222222222222222222222\n"))
-    clusters_list_out <<- clusters_list
+
+    # The selection in event_data above doesn't reset when new region is loaded
+    # this will cause some problems if the user selectes a cluster with row value
+    # greater than the maximum for the next loaded region. To fix this we need to 
+    # check the value of the selected row as below
+    if(strong_clusters_rows_selected > nrow(strong_clusters)) strong_clusters_rows_selected <- 1
     
     # call the function that gets the cluster data
     get_cluster_data(strong_clusters_dt = strong_clusters
