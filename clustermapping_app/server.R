@@ -171,12 +171,16 @@ shinyServer(function(input, output) {
   #-----------------------------------------------------------------------------------#
   
   strong_clusters_plot_fun <- reactive({
+    
+    # function to build strong cluster barplot
+    
+    # get a table of strong clusters for the selected region
     strong_clusters <- strong_clusters_fun()[["strong_clusters"]]
     
-    # strong_clusters[, cluster_name_2 := paste0(cluster_name, ", Rank: ", cluster_pos)]
     # It is better to use the short names since it will help us with the real-estate on the plots
     strong_clusters[, cluster_name_2 := paste0(cluster_short_name, ", Rank: ", cluster_pos)]
     
+    # make a barplot of the strong clusters
     plot_ly(data = strong_clusters 
             , x = ~emp_tl
             , y = ~reorder(cluster_name_2, -cluster_pos)
@@ -200,8 +204,16 @@ shinyServer(function(input, output) {
   #===================================================================================#
   #===================================== Outputs =====================================#
   #===================================================================================#
+  
   output$text_1 <- renderText({ 
+    # some regions have no strong clusters, this is a custom text to display
+    # if the region has a list of strong clusters or non-strong clusters
+    
+    # find out if the clusters returned from strong_clusters_fun is a strong 
+    # cluster or not
     is_strong_cluster <- strong_clusters_fun()[["is_strong_cluster"]]
+    
+    # return appropriate text
     if(is_strong_cluster) {
       paste0("Strong Clusters in ", input$region_name, ", ", input$year)
     }else{
