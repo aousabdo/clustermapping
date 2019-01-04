@@ -33,7 +33,6 @@ shinyServer(function(input, output) {
 
     # get the cluster the user clicks on from the strong cluster barplot
     s <- event_data("plotly_click", source = "strong_clusters_barplot")
-
     
     # if the user hasn't selected a cluster yet, just return the first cluster
     # in the strong cluster barplot for that region, otherwise return cluster 
