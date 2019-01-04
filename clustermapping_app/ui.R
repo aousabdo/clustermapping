@@ -1,4 +1,3 @@
-library(shiny)
 
 source('global.R')
 # Define UI for application that draws a histogram
