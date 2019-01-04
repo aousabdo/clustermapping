@@ -12,6 +12,10 @@ shinyServer(function(input, output) {
   #===================================================================================#
   # declare and build some reactive functions that we'll use later 
   
+  #-----------------------------------------------------------------------------------#
+  #-------------------------------- strong_clusters_fun ------------------------------#
+  #-----------------------------------------------------------------------------------#
+  
   strong_clusters_fun <- reactive({
     # this reactive function calls the function that gets the strong clusters for a given region and year
     get_strong_clusters(region_name = input$region_name
@@ -20,9 +24,17 @@ shinyServer(function(input, output) {
                         , meta_data_list = meta_data)
   })
   
+  #-----------------------------------------------------------------------------------#
+  #---------------------------- End: strong_clusters_fun -----------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  #-----------------------------------------------------------------------------------#
+  #---------------------------------- cluster_data_fun -------------------------------#
+  #-----------------------------------------------------------------------------------#
+  
   cluster_data_fun <- reactive({
     # reactive function to call the get_cluster_data for a given cluster
-  
+    
     # get strong clusters 
     strong_clusters <- strong_clusters_fun()[["strong_clusters"]]
     strong_clusters_out <<- copy(strong_clusters)
@@ -30,32 +42,49 @@ shinyServer(function(input, output) {
     # if the user hasn't yet selected a cluster, pick the first one
     if(is.null(input$strong_clusters_rows_selected)) strong_clusters_rows_selected <- 1
     else strong_clusters_rows_selected <- input$strong_clusters_rows_selected
-
+    
     # get the cluster the user clicks on from the strong cluster barplot
     s <- event_data("plotly_click", source = "strong_clusters_barplot")
     
     # if the user hasn't selected a cluster yet, just return the first cluster
     # in the strong cluster barplot for that region, otherwise return cluster 
     # selected by the user
-
+    
     if(is.null(s)) strong_clusters_rows_selected <- 1
     else strong_clusters_rows_selected <- s$pointNumber + 1
-
+    
     # The selection in event_data above doesn't reset when new region is loaded
     # this will cause some problems if the user selectes a cluster with row value
     # greater than the maximum for the next loaded region. To fix this we need to 
     # check the value of the selected row as below
     if(strong_clusters_rows_selected > nrow(strong_clusters)) strong_clusters_rows_selected <- 1
     
-    # call the function that gets the cluster data
+    # now we can call the function that gets the cluster data
     get_cluster_data(strong_clusters_dt = strong_clusters
                      , strong_clusters_rows_selected = strong_clusters_rows_selected
                      , clusters_list_input = clusters_list)
   })  
   
-  region_clusters <- reactive({
-    cluster_name       <- cluster_data_fun()$related_clusters_dt$parent_cluster_name %>% unique() %>% as.character()
+  #-----------------------------------------------------------------------------------#
+  #------------------------------- End: cluster_data_fun -----------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  #-----------------------------------------------------------------------------------#
+  #-------------------------------- region_clusters_fun ------------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  region_clusters_fun <- reactive({
+    # reactive function to call the get_region_clusters function which is a function 
+    # to get cluster level data including by range of years. See global.R for more 
+    # details
+    
+    # no need for the line below, commenting it out but keeping it just in case I need it later
+    # cluster_name       <- cluster_data_fun()$related_clusters_dt$parent_cluster_name %>% unique() %>% as.character()
+    
+    # get region type
     region_type        <- regions_dt[region_short_name_t == input$region_name, region_type_t]
+    
+    # call the get_region_clusters function
     region_clusters_dt <- get_region_clusters(cluster = "all"
                                               , region_name = input$region_name
                                               , region_type = region_type
@@ -66,37 +95,80 @@ shinyServer(function(input, output) {
     return(region_clusters_dt)
   })
   
-  cluster_plots <- reactive({
-    region_clusters_dt <- region_clusters()
+  #-----------------------------------------------------------------------------------#
+  #---------------------------- End: region_clusters_fun -----------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  #-----------------------------------------------------------------------------------#
+  #--------------------------------- cluster_plots_fun -------------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  cluster_plots_fun <- reactive({
+    # this is the reactive function that calls the functino which makes cluster plots
+    # mainly build_cluster_plots
     
-    # add short names
+    # get regions clusters table
+    region_clusters_dt <- region_clusters_fun()
+    
+    # add short names to the region clusters table
     region_clusters_dt <- add_short_names(clusters_dt = region_clusters_dt
                                           , clusters_list_input = clusters_list
                                           , by_column = "cluster_code")
     
+    # now call the build_cluster_plots function
     build_cluster_plots(region_clusters_dt = region_clusters_dt
                         , N_top_clusters = 10
-                        , year_selected = 2016
-                        , traded_only = F
+                        , year_selected = input$year
+                        , traded_only = FALSE
                         , start_year = 1998
-                        , end_year = 2016
+                        , end_year = input$year
                         , meta_data_list = meta_data
                         , use_short_names = TRUE)
   })
   
-  cluster_emp <- reactive({
-    cluster_plots()$cluster_emp
+  #-----------------------------------------------------------------------------------#
+  #------------------------------- End: cluster_plots_fun ----------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  #-----------------------------------------------------------------------------------#
+  #---------------------------------- cluster_emp_fun --------------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  cluster_emp_fun <- reactive({
+    # reactive function to build the cluster employment barplot
+    cluster_plots_fun()$cluster_emp
   })
   
-  network_viz <- reactive({
-    # call the function which builds the network visulizations
+  #-----------------------------------------------------------------------------------#
+  #-------------------------------- End: cluster_emp_fun -----------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  #-----------------------------------------------------------------------------------#
+  #---------------------------------- network_viz_fun --------------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  network_viz_fun <- reactive({
+    # reactive function to build network visulaizations
+    
+    # get cluster data
     cluster_data <- cluster_data_fun()
     
     cluster_data_out <<- copy(cluster_data)
+    
     # don't return an error if there is no data in the related clusters table
     if(nrow(cluster_data$related_clusters_dt) == 0) return(NULL)
+
+    # call the function which builds the network visulizations    
     build_network_viz(cluster_data = cluster_data)
   })
+  
+  #-----------------------------------------------------------------------------------#
+  #-------------------------------- End: network_viz_fun -----------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  #-----------------------------------------------------------------------------------#
+  #------------------------------ strong_clusters_plot_fun ---------------------------#
+  #-----------------------------------------------------------------------------------#
   
   strong_clusters_plot_fun <- reactive({
     strong_clusters <- strong_clusters_fun()[["strong_clusters"]]
@@ -116,6 +188,11 @@ shinyServer(function(input, output) {
              , yaxis = list(title = "",showgrid = FALSE, zeroline = TRUE, showticklabels = TRUE)
              , margin = list(l = 350, r = 50, b = 50, t = 50, pad = 4))
   })
+  
+  #-----------------------------------------------------------------------------------#
+  #-------------------------- End: strong_clusters_plot_fun --------------------------#
+  #-----------------------------------------------------------------------------------#
+  
   #===================================================================================#
   #============================= End: Reactive Functions =============================#
   #===================================================================================#
@@ -132,29 +209,29 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$top_clusters <- DT::renderDataTable(cluster_plots()$top_clusters)
+  output$top_clusters <- DT::renderDataTable(cluster_plots_fun()$top_clusters)
   
-  output$donut_chart <- plotly::renderPlotly(cluster_plots()$donut_chart)
-  donut_chart <- reactive({cluster_plots()$donut_chart})
+  output$donut_chart <- plotly::renderPlotly(cluster_plots_fun()$donut_chart)
+  donut_chart <- reactive({cluster_plots_fun()$donut_chart})
   
   output$cluster_emp_plot <- plotly::renderPlotly({
     # s <- event_data("plotly_click", source = "barplot")
     # print(as.list(s))
-    cluster_plots()$cluster_emp
+    cluster_plots_fun()$cluster_emp
   })
   
   output$cluster_emp_plot_2 <- plotly::renderPlotly({
     # s <- event_data("plotly_click", source = "barplot")
     # print(as.list(s))
-    cluster_plots()$cluster_emp
+    cluster_plots_fun()$cluster_emp
   })
   
-  output$cluster_wages <- plotly::renderPlotly(cluster_plots()$cluster_wages)
-  output$cluster_job_creation <- plotly::renderPlotly(cluster_plots()$cluster_job_creation)  
+  output$cluster_wages <- plotly::renderPlotly(cluster_plots_fun()$cluster_wages)
+  output$cluster_job_creation <- plotly::renderPlotly(cluster_plots_fun()$cluster_job_creation)  
   
   
   output$vizNetwork_basic <- renderVisNetwork({
-    network_viz()$vizNetwork_basic
+    network_viz_fun()$vizNetwork_basic
   }) 
   
   # final network visualization we will use
@@ -178,11 +255,11 @@ shinyServer(function(input, output) {
   }) 
   
   output$forceNetwork_Viz <- renderForceNetwork({
-    network_viz()$forceNetwork_viz
+    network_viz_fun()$forceNetwork_viz
   })
   
   output$sankeyNetwork_Viz <- renderSankeyNetwork({
-    network_viz()$sankeyNetwork_viz
+    network_viz_fun()$sankeyNetwork_viz
   })
   
   output$strong_clusters <- DT::renderDataTable(expr = {
