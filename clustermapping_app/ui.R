@@ -1,5 +1,15 @@
+#######################################################################################
+#######################################################################################
+#######################################################################################
+######### clustermapping is a web application built using R. The app queries  #########
+######### data from the clustermapping.us site.                               #########
+######### Dr. Aous Abdo <aous.abdo@gmail.com>                                 ######### 
+#######################################################################################
+#######################################################################################
+#######################################################################################
 
 source('global.R')
+
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
   
@@ -23,7 +33,7 @@ shinyUI(fluidPage(
                 # Show a plot of the generated distribution
                 mainPanel(tabsetPanel(
                   tabPanel("Related Clusters"
-                           , h1(textOutput("text_1"))
+                           , h1(textOutput("region_cluster_header"))
                            , br()
                            , br()
                            , br()

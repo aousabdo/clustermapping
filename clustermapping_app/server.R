@@ -1,3 +1,13 @@
+#######################################################################################
+#######################################################################################
+#######################################################################################
+######### clustermapping is a web application built using R. The app queries  #########
+######### data from the clustermapping.us site.                               #########
+######### Dr. Aous Abdo <aous.abdo@gmail.com>                                 ######### 
+#######################################################################################
+#######################################################################################
+#######################################################################################
+
 # start with a clean slate as always
 rm(list = ls())
 
@@ -31,7 +41,7 @@ shinyServer(function(input, output) {
   #-----------------------------------------------------------------------------------#
   #---------------------------------- cluster_data_fun -------------------------------#
   #-----------------------------------------------------------------------------------#
-  
+
   cluster_data_fun <- reactive({
     # reactive function to call the get_cluster_data for a given cluster
     
@@ -197,6 +207,18 @@ shinyServer(function(input, output) {
   #-------------------------- End: strong_clusters_plot_fun --------------------------#
   #-----------------------------------------------------------------------------------#
   
+  #-----------------------------------------------------------------------------------#
+  #------------------------------------ donut_chart ----------------------------------#
+  #-----------------------------------------------------------------------------------#
+
+  donut_chart <- reactive({
+    # reactive function to create donut chart
+    cluster_plots_fun()$donut_chart
+    })
+  
+  #-----------------------------------------------------------------------------------#
+  #--------------------------------- End: donut_chart --------------------------------#
+  #-----------------------------------------------------------------------------------#
   #===================================================================================#
   #============================= End: Reactive Functions =============================#
   #===================================================================================#
@@ -205,7 +227,11 @@ shinyServer(function(input, output) {
   #===================================== Outputs =====================================#
   #===================================================================================#
   
-  output$text_1 <- renderText({ 
+  #-----------------------------------------------------------------------------------#
+  #------------------------------ region_cluster_header ------------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  output$region_cluster_header <- renderText({ 
     # some regions have no strong clusters, this is a custom text to display
     # if the region has a list of strong clusters or non-strong clusters
     
@@ -221,41 +247,46 @@ shinyServer(function(input, output) {
     }
   })
   
+  #-----------------------------------------------------------------------------------#
+  #--------------------------- End: region_cluster_header ----------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  # top clusters table
   output$top_clusters <- DT::renderDataTable(cluster_plots_fun()$top_clusters)
   
+  # donut chart
   output$donut_chart <- plotly::renderPlotly(cluster_plots_fun()$donut_chart)
-  donut_chart <- reactive({cluster_plots_fun()$donut_chart})
   
+  # cluster employement plot
   output$cluster_emp_plot <- plotly::renderPlotly({
-    # s <- event_data("plotly_click", source = "barplot")
-    # print(as.list(s))
     cluster_plots_fun()$cluster_emp
   })
   
+  # second employment plot. This is the same as the previous one, we are only doing it cause
+  # shiny doesn't allow more than one call to an output
   output$cluster_emp_plot_2 <- plotly::renderPlotly({
-    # s <- event_data("plotly_click", source = "barplot")
-    # print(as.list(s))
     cluster_plots_fun()$cluster_emp
   })
-  
+
+  # cluster wages plot  
   output$cluster_wages <- plotly::renderPlotly(cluster_plots_fun()$cluster_wages)
+  
+  # job creation over time by cluster
   output$cluster_job_creation <- plotly::renderPlotly(cluster_plots_fun()$cluster_job_creation)  
   
-  
+  # basic vis network
   output$vizNetwork_basic <- renderVisNetwork({
     network_viz_fun()$vizNetwork_basic
   }) 
   
-  # final network visualization we will use
+  # final network visualization we will use, a more advanced vis network which I worked hard to achieve
   output$vizNetwork_advanced <- renderVisNetwork({
     # get table for all related clusters
     all_related_clusters <- get_all_related_clusters(clusters_list_input = clusters_list)
     
     # get the selected cluster by the user
     selected_cluster <- cluster_data_fun()$related_clusters_dt$parent_cluster_code %>% unique()
-    # print(cluster_data_fun()$related_clusters_dt$parent_cluster_name %>% unique())
-    # print(selected_cluster)
-    
+
     # build the network visulaization
     vis <- build_graph_vis(related_cluster_input = all_related_clusters
                            , clusters_avlbl_input = clusters_avlbl
@@ -264,34 +295,45 @@ shinyServer(function(input, output) {
                            , visManipulation = F
                            , cluster_network_positions_file = "./data/cluster_network_positions.Rds"
                            , region_name = input$region_name)[[3]]
+    return(vis)
   }) 
   
+  # focenetwork viz
   output$forceNetwork_Viz <- renderForceNetwork({
     network_viz_fun()$forceNetwork_viz
   })
   
+  # sankey diagram
   output$sankeyNetwork_Viz <- renderSankeyNetwork({
     network_viz_fun()$sankeyNetwork_viz
   })
   
+  # strong clusters table
   output$strong_clusters <- DT::renderDataTable(expr = {
     strong_clusters <- strong_clusters_fun()[["strong_clusters"]]
     strong_clusters[, .(cluster_name, emp_tl)]
   }, server = FALSE, selection = 'single')
   
   
+  # strong cluster plot
   output$strong_clusters_plot <- plotly::renderPlotly({
     strong_clusters_plot_fun()
   })
+  
+  # table showing related clusters
   output$related_clusters <- shiny::renderDataTable({
     cluster_data_fun()$related_clusters_dt
   })
   
+  # table showing sub clusters
   output$sub_clusters <- shiny::renderDataTable({cluster_data_fun()$sub_clusters_dt})
   
+  # industries for a given clusters table
   output$industries <- shiny::renderDataTable({cluster_data_fun()$industries})
   
+  # combined plots showing the donut charts and employment barplot
   output$combined_plots_1 <- plotly::renderPlotly({
+    # make a subplot with one row
     p <- plotly::subplot(nrows = 1
                          , donut_chart()
                          , cluster_emp()
@@ -302,7 +344,11 @@ shinyServer(function(input, output) {
   #=========================================================================#
   #=========================================================================#
   #=========================================================================#
-  # code to extract the positions of the nodes. This is a one-time thing
+  
+  # code below was developed to extract the positions of the nodes
+  # This code won't be part of the app, but I used it initially 
+  # to extract the node positions and manual edges 
+  
   vals <- reactiveValues(coords=NULL)
   
   observeEvent(input$getNodes, {
