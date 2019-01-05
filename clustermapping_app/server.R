@@ -47,7 +47,6 @@ shinyServer(function(input, output) {
     
     # get strong clusters 
     strong_clusters <- strong_clusters_fun()[["strong_clusters"]]
-    strong_clusters_out <<- copy(strong_clusters)
     
     # if the user hasn't yet selected a cluster, pick the first one
     if(is.null(input$strong_clusters_rows_selected)) strong_clusters_rows_selected <- 1

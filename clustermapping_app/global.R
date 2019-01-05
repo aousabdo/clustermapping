@@ -995,7 +995,7 @@ build_graph_vis <- function(related_cluster_input = NULL
   # and set the table keys
   setkeyv(edges, c("from", "to")) 
   
-  # now we need to take care of the connections, some of them will be dashed, this depneds on the strength of the connection
+  # now we need to take care of the connections, some of them will be dashed, this depends on the strength of the connection
   edges[, sum_relatedness := related_90 + related_i20_90 + related_i20_90_min]
   
   if(apply_filters){
@@ -1037,7 +1037,6 @@ build_graph_vis <- function(related_cluster_input = NULL
 
     # now copy the new edges table to be used in our plots
     edges <- copy(edges_tmp)
-    edges_out <<- copy(edges)
   }
   
   # work on the nodes now
@@ -1157,6 +1156,10 @@ build_graph_vis <- function(related_cluster_input = NULL
   }
   
   nodes[, font.size := 50]
+  
+  edges_out <<- copy(edges)
+  nodes_out <<- copy(nodes)
+  
   return(list(edges = edges, nodes = nodes, visGraph = p))
 }
 #========================================================================================#
