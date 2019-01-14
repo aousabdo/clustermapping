@@ -177,12 +177,12 @@ get_cluster_data <- function(strong_clusters_dt = NULL
   # get the cluster selected by the user
   selected_cluster <- strong_clusters_dt[strong_clusters_rows_selected]
   
-  selected_cluster_out <<- copy(selected_cluster)
   # now we query the cluster list data for the cluster selected by the user
   selected_cluster_key <- selected_cluster$cluster_key %>% as.character() 
   # The as.character is crucial, otherwise we'll get the wrong related clusters
   
   selected_cluster_data <- clusters_list_input[[selected_cluster_key]] 
+  selected_cluster_data_out <<- copy(selected_cluster_data)
   
   # let's get the number of sub_clusters as well as the number of related_clusters
   # to the selected cluster by the user
@@ -294,6 +294,7 @@ get_cluster_data <- function(strong_clusters_dt = NULL
   # rearrange columns
   setcolorder(industries, c(ncol(industries), 1:(ncol(industries)-1)))
   
+  sub_clusters_dt_out <<- copy(sub_clusters_dt)
   # put it all in one list
   cluster_data_list <- list(related_clusters_dt = related_clusters_dt
                             , sub_clusters_dt = sub_clusters_dt

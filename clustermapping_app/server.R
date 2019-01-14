@@ -71,7 +71,8 @@ shinyServer(function(input, output) {
     # now we can call the function that gets the cluster data
     get_cluster_data(strong_clusters_dt = strong_clusters
                      , strong_clusters_rows_selected = strong_clusters_rows_selected
-                     , clusters_list_input = clusters_list)
+                     , clusters_list_input = clusters_list
+                     , verbose = TRUE)
   })  
   
   #-----------------------------------------------------------------------------------#
