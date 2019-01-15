@@ -543,7 +543,7 @@ get_region_clusters <- function(cluster = NULL
   
   # add a column specifiying cluster type
   region_cluster_dt[, cluster_type := factor(ifelse(traded_b, "traded", "local"))]
-  
+
   return(region_cluster_dt)
 }
 #========================================================================================#
@@ -592,8 +592,6 @@ build_cluster_plots <- function(region_clusters_dt = NULL
             # , domain = list(x = c(0, 0.5), y = c(0, 0.9))
             )
   
-  p1_out <<- p1
-  
   p1 <- p1 %>%
     layout(title = paste0("\nTraded vs. Local Clusters, ", year_selected),  showlegend = T,
            xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
@@ -604,6 +602,10 @@ build_cluster_plots <- function(region_clusters_dt = NULL
   col_to_plot <- "cluster_name_t"
   if(use_short_names) col_to_plot <- "cluster_short_name"
   
+  # add us rank to cluster name
+  region_cluster[, cluster_name_t := paste0(cluster_name_t, ": ", emp_tl_rank_i)]
+  region_cluster[, cluster_short_name := paste0(cluster_short_name, ": ", emp_tl_rank_i)]
+  
   p2 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE][1:N_top_clusters, ] 
                 , x = ~emp_tl
                 , y = ~reorder(get(col_to_plot), emp_tl)
@@ -611,17 +613,17 @@ build_cluster_plots <- function(region_clusters_dt = NULL
                 , orientation = "h"
                 , source = "barplot"
                 , color = I("steelblue")) 
-  
-  p2_out <<- p2
-  
+
   p2 <- p2 %>%
-    layout(title = paste0("\nEmployment by Traded Cluster, ", year_selected, "\n"),  
+    layout(title = paste0("\n Employment by Traded Cluster, ", year_selected, "\n"),  
            xaxis = list(title = paste0("Employment, ", year_selected), showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
            yaxis = list(title = "",showgrid = FALSE, zeroline = TRUE, showticklabels = TRUE),
            margin = list(l = 350, r = 50, b = 50, t = 50, pad = 4))
   
   p2 <- hide_legend(p2)
-  
+
+  p2_out <<- p2
+    
   p3 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE] 
                 , x = ~ private_wage_tf
                 , y = ~reorder(get(col_to_plot), private_wage_tf)

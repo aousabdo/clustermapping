@@ -125,6 +125,8 @@ shinyServer(function(input, output) {
                                           , clusters_list_input = clusters_list
                                           , by_column = "cluster_code")
     
+    region_cluster_dt_out <<- copy(region_clusters_dt)
+    
     # now call the build_cluster_plots function
     build_cluster_plots(region_clusters_dt = region_clusters_dt
                         , N_top_clusters = 10
