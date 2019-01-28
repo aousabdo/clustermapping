@@ -198,6 +198,10 @@ shinyServer(function(input, output) {
             , y = ~reorder(cluster_name_2, -cluster_pos)
             , type = 'bar'
             , orientation = "h"
+            , hoverinfo = "text"
+            , text = ~paste(reorder(cluster_name, -cluster_pos), "<br>"
+                            , "Local Rank:", cluster_pos, "<br>"
+                            , "Employment:", emp_tl)
             , source = "strong_clusters_barplot") %>%
       layout(title = paste0("Strong Clusters in ", input$region_name, ", ", input$year)  
              , xaxis = list(title = "Employment", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE)

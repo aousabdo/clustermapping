@@ -543,7 +543,7 @@ get_region_clusters <- function(cluster = NULL
   
   # add a column specifiying cluster type
   region_cluster_dt[, cluster_type := factor(ifelse(traded_b, "traded", "local"))]
-
+  
   return(region_cluster_dt)
 }
 #========================================================================================#
@@ -590,7 +590,7 @@ build_cluster_plots <- function(region_clusters_dt = NULL
     plot_ly(labels = ~ cluster_type, values = ~ count) %>%
     add_pie(hole = 0.6
             # , domain = list(x = c(0, 0.5), y = c(0, 0.9))
-            )
+    )
   
   p1 <- p1 %>%
     layout(title = paste0("\nTraded vs. Local Clusters, ", year_selected),  showlegend = T,
@@ -600,20 +600,27 @@ build_cluster_plots <- function(region_clusters_dt = NULL
   p1 <- hide_legend(p1)
   
   col_to_plot <- "cluster_name_t"
-  if(use_short_names) col_to_plot <- "cluster_short_name"
+  if(use_short_names){
+    col_to_plot <- "cluster_short_name"
+    col_to_plot_2 <- "cluster_short_name_2"
+  }
   
   # add us rank to cluster name
-  region_cluster[, cluster_name_t := paste0(cluster_name_t, ": ", emp_tl_rank_i)]
-  region_cluster[, cluster_short_name := paste0(cluster_short_name, ": ", emp_tl_rank_i)]
+  region_cluster[, cluster_name_t_2 := paste0(cluster_name_t, ": ", emp_tl_rank_i)]
+  region_cluster[, cluster_short_name_2 := paste0(cluster_short_name, ": ", emp_tl_rank_i)]
   
   p2 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE][1:N_top_clusters, ] 
                 , x = ~emp_tl
-                , y = ~reorder(get(col_to_plot), emp_tl)
+                , y = ~reorder(get(col_to_plot_2), emp_tl)
                 , type = 'bar'
                 , orientation = "h"
                 , source = "barplot"
+                , hoverinfo = "text"
+                , text = ~paste(reorder(get(col_to_plot), emp_tl), "<br>"
+                                , "US rank:", emp_tl_rank_i, "<br>"
+                                , "Employment:", emp_tl)
                 , color = I("steelblue")) 
-
+  
   p2 <- p2 %>%
     layout(title = paste0("\n Employment by Traded Cluster, ", year_selected, "\n"),  
            xaxis = list(title = paste0("Employment, ", year_selected), showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
@@ -621,13 +628,16 @@ build_cluster_plots <- function(region_clusters_dt = NULL
            margin = list(l = 350, r = 50, b = 50, t = 50, pad = 4))
   
   p2 <- hide_legend(p2)
-
+  
   p2_out <<- p2
-    
+  
   p3 <- plot_ly(data = region_cluster[year_t == year_selected & traded_b == TRUE] 
                 , x = ~ private_wage_tf
                 , y = ~reorder(get(col_to_plot), private_wage_tf)
                 , type = 'bar'
+                , hoverinfo = "text"
+                , text = ~paste(reorder(get(col_to_plot), private_wage_tf), "<br>"
+                                , paste("Avg. Wages,", year_t, ":"), paste0("$", round(private_wage_tf, 0)))
                 , orientation = "h") %>%
     layout(title = paste0("\nWages by Traded Cluster, ", year_selected),  
            xaxis = list(title = paste0("Wages, ", year_selected), showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE),
@@ -1021,7 +1031,7 @@ build_graph_vis <- function(related_cluster_input = NULL
     # check to make sure the custom edges files exists
     if(!file.exists(custom_edges_file)) stop("\tCustom edges file doesn't exist, qutting...\n")
     else{edges_data <- readRDS(custom_edges_file)}
-  
+    
     # the custom edges file contain all edges
     # we only need the from and to since we'll merge this file with the edges table we already have
     from <- sapply(edges_data, function(x) x$from)
@@ -1037,7 +1047,7 @@ build_graph_vis <- function(related_cluster_input = NULL
     edges_tmp[is.na(dashes), dashes := TRUE]
     edges_tmp[is.na(parent_cluster_name), width := 1]
     # edges_tmp[is.na(parent_cluster_name), color := "grey30"]
-
+    
     # now copy the new edges table to be used in our plots
     edges <- copy(edges_tmp)
   }
