@@ -16,6 +16,7 @@ library(purrr)
 library(scales)
 library(pryr)
 library(qdap)
+library(readxl)
 
 # GIS libraries
 library(tidycensus)
@@ -145,6 +146,14 @@ invisible(cat("\tSaving regions data...\n"))
 saveRDS(object = regions_data, file = "./data/regions_data.Rds")
 
 options(warn = 0)
+
+# next we will read in the definition of the economic areas, note that this is slightly different 
+# than the definitions by the census bureau
+EA_link <- "http://clustermapping.us/sites/default/files/files/page/BEA%20Economic%20Areas%20and%20Counties.xls"
+
+download.file(EA_link, destfile = "./data/BEA_Economic_Areas_and_Counties.xls")
+
+EA <- readxl::read_xls("./data/BEA_Economic_Areas_and_Counties.xls", sheet = 2)
 #============================================================================================#
 #=================================== End: Regions Data ======================================#
 #============================================================================================#
