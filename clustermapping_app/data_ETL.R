@@ -12,6 +12,16 @@ library(visNetwork)
 library(igraph)
 library(stringr)
 library(data.table)
+library(purrr)
+library(scales)
+library(pryr)
+library(qdap)
+
+# GIS libraries
+library(tidycensus)
+library(tigris)
+library(tmap)
+library(sf)
 
 ##############################################################################################
 ##############################################################################################
@@ -238,10 +248,22 @@ options(tigris_use_cache = TRUE)
 options(tigris_class = "sf")
 
 # download county population along with the geometry/shape files for the counties
-county_pop <- get_acs(geography = "county"
-                      , variables = "B01003_001"
-                      , geometry = TRUE
-                      , shift_geo = TRUE)
+county_pop <- tidycensus::get_acs(geography = "county"
+                                  , variables = c("population" = "B01003_001")
+                                  , geometry = TRUE
+                                  , keep_geo_vars = TRUE
+                                  , shift_geo = TRUE)
+
+# change state names to state abbreviations 
+county_pop <- county_pop %>%
+  mutate(NAME = qdap::mgsub(state.name, state.abb, county_pop$NAME))
+
+# download county level data using tigris
+counties <- tigris::counties(cb = TRUE)
+
+# add regoin_code_t to match the regions_dt data.table
+# this is simply the concatenation of state and county fp
+counties <- counties %>% mutate(regoin_code_t = paste0(STATEFP, COUNTYFP))
 #============================================================================================#
 #===================================== End: GIS Data ========================================#
 #============================================================================================#
