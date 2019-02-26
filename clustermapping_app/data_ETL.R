@@ -258,12 +258,44 @@ county_pop <- tidycensus::get_acs(geography = "county"
 county_pop <- county_pop %>%
   mutate(NAME = qdap::mgsub(state.name, state.abb, county_pop$NAME))
 
+# now download the us states data
+us_states <- tigris::states(cb = TRUE)
+
 # download county level data using tigris
-counties <- tigris::counties(cb = TRUE)
+us_counties <- tigris::counties(cb = TRUE)
 
 # add regoin_code_t to match the regions_dt data.table
 # this is simply the concatenation of state and county fp
-counties <- counties %>% mutate(regoin_code_t = paste0(STATEFP, COUNTYFP))
+us_counties <- us_counties %>% mutate(region_code_t = paste0(STATEFP, COUNTYFP))
+
+# download the combined statistical areas from tigris
+# this dataset is the equivalent of the economic areas from the 
+# clustermapping project
+us_csa <- tigris::combined_statistical_areas(cb = TRUE)
+
+# download the core based statistical area with tigris
+# this will be used to locate the boundary of metropolitan areas 
+# this dataset is equivalent to the msa data from the clustermapping project
+us_cb <- core_based_statistical_areas(cb = TRUE)
+
+#--------------------------------------------------------------------------------------------#
+#---------------------------------------- Join the data -------------------------------------#
+#--------------------------------------------------------------------------------------------#
+# we will join each region category separatley and then rbind the table together
+# the lhs has to be an sf object, the ones we downladed with tigris, so that the 
+# output is also an sf object
+
+# join state data
+regions_dt_states <- dplyr::left_join(us_states, regions_dt, by = c("STATEFP" = "region_code_t"))
+
+#join county data
+regions_dt_counties <- dplyr::left_join(us_counties, regions_dt, by = "region_code_t")
+
+# join the msa area data
+regions_dt_msa <- dplyr::left_join(us_cb, regions_dt, by = c("CBSAFP" = "region_code_t"))
+#--------------------------------------------------------------------------------------------#
+#------------------------------------- End: Join the data -----------------------------------#
+#--------------------------------------------------------------------------------------------#
 #============================================================================================#
 #===================================== End: GIS Data ========================================#
 #============================================================================================#
