@@ -218,3 +218,31 @@ saveRDS(object = meta_data, file = "./data/meta_data.Rds")
 #============================================================================================#
 #==================================== End: Meta Data ========================================#
 #============================================================================================#
+
+#============================================================================================#
+#======================================== GIS Data ==========================================#
+#============================================================================================#
+# we will be using the tidycensus and tigris packages to get GIS data related to US counties
+# etc. 
+
+# this is Dr. Aous Abdo's census API key. Please use it wisely
+census_api_key(key = "00480fb480b6c6a5ebd4cfcb7afa6da946be92e8", install = TRUE)
+readRenviron("~/.Renviron")
+
+# Set the tigris_use_cache option. We want to cache the data so we don't end up downloading it
+# everytime 
+options(tigris_use_cache = TRUE)
+
+# we want the data in simple feature format
+# Get data from tigris as simple features
+options(tigris_class = "sf")
+
+# download county population along with the geometry/shape files for the counties
+county_pop <- get_acs(geography = "county"
+                      , variables = "B01003_001"
+                      , geometry = TRUE
+                      , shift_geo = TRUE)
+#============================================================================================#
+#===================================== End: GIS Data ========================================#
+#============================================================================================#
+

@@ -26,6 +26,15 @@ library(htmlwidgets)
 library(shiny)
 library(DT)
 library(shiny)
+library(purrr)
+library(scales)
+library(pryr)
+
+# GIS libraries
+library(tidycensus)
+library(tigris)
+library(tmap)
+library(sf)
 
 # supress warnings
 options(warn = -1)
