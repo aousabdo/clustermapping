@@ -154,6 +154,9 @@ economic_areas_link <- "http://clustermapping.us/sites/default/files/files/page/
 download.file(economic_areas_link, destfile = "./data/BEA_Economic_Areas_and_Counties.xls")
 
 economic_areas <- readxl::read_xls("./data/BEA_Economic_Areas_and_Counties.xls", sheet = 2)
+
+# clean the names to make them more informative
+economic_areas <- economic_areas %>% rename(economic_area_code = EA, economic_area = `EA Name`)
 #============================================================================================#
 #=================================== End: Regions Data ======================================#
 #============================================================================================#
@@ -241,6 +244,9 @@ saveRDS(object = meta_data, file = "./data/meta_data.Rds")
 #============================================================================================#
 #======================================== GIS Data ==========================================#
 #============================================================================================#
+#--------------------------------------------------------------------------------------------#
+#-------------------------------------- Obtain GIS data -------------------------------------#
+#--------------------------------------------------------------------------------------------#
 # we will be using the tidycensus and tigris packages to get GIS data related to US counties
 # etc. 
 
@@ -288,6 +294,10 @@ us_csa <- tigris::combined_statistical_areas(cb = TRUE)
 us_cb <- core_based_statistical_areas(cb = TRUE)
 
 #--------------------------------------------------------------------------------------------#
+#---------------------------------- End: Obtain GIS data ------------------------------------#
+#--------------------------------------------------------------------------------------------#
+
+#--------------------------------------------------------------------------------------------#
 #---------------------------------------- Join the data -------------------------------------#
 #--------------------------------------------------------------------------------------------#
 # we will join each region category separatley and then rbind the table together
@@ -295,19 +305,35 @@ us_cb <- core_based_statistical_areas(cb = TRUE)
 # output is also an sf object
 
 # join state data
-regions_dt_states <- dplyr::left_join(us_states, regions_dt, by = c("STATEFP" = "region_code_t"))
+states_sf <- dplyr::left_join(us_states, regions_dt, by = c("STATEFP" = "region_code_t"))
 
 #join county data
-regions_dt_counties <- dplyr::left_join(us_counties, regions_dt, by = "region_code_t")
+counties_sf <- dplyr::left_join(us_counties, regions_dt, by = "region_code_t")
 
 # join the msa area data
-regions_dt_msa <- dplyr::left_join(us_cb, regions_dt, by = c("CBSAFP" = "region_code_t"))
+msa_sf <- dplyr::left_join(us_cb, regions_dt, by = c("CBSAFP" = "region_code_t"))
 
 # join the economic areas
-regions_dt_economics <- dplyr::left_join(us_counties, economic_areas, by = c("region_code_t" = "FIPS"))
+# first we'll join economic areas table with the regions_dt table
+economic_areas <- left_join(economic_areas, regions_dt, by = c("FIPS" = "region_code_t"))
+
+# now join with the county data
+economic_areas_sf <- dplyr::left_join(us_counties, economic_areas, by = c("region_code_t" = "FIPS"))
 #--------------------------------------------------------------------------------------------#
 #------------------------------------- End: Join the data -----------------------------------#
 #--------------------------------------------------------------------------------------------#
+
+#--------------------------------------------------------------------------------------------#
+#--------------------------------------- Save GIS data --------------------------------------#
+#--------------------------------------------------------------------------------------------#
+saveRDS(states_sf, "./data/states_sf.rds")
+saveRDS(counties_sf, "./data/counties_sf.rds")
+saveRDS(msa_sf, "./data/msa_sf.rds")
+saveRDS(economic_areas_sf, "./data/economic_areas_sf.rds")
+#--------------------------------------------------------------------------------------------#
+#------------------------------------ End: Save GIS data ------------------------------------#
+#--------------------------------------------------------------------------------------------#
+
 #============================================================================================#
 #===================================== End: GIS Data ========================================#
 #============================================================================================#
