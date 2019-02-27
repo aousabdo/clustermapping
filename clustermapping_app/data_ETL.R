@@ -263,8 +263,9 @@ options(tigris_use_cache = TRUE)
 options(tigris_class = "sf")
 
 # download county population along with the geometry/shape files for the counties
-county_pop <- tidycensus::get_acs(geography = "county"
-                                  , variables = c("population" = "B01003_001")
+county_data <- tidycensus::get_acs(geography = "county"
+                                  , variables = c(population = "B01003_001"
+                                                  , hhincome = "B19013_001")
                                   , geometry = TRUE
                                   , keep_geo_vars = TRUE
                                   , shift_geo = TRUE)
@@ -330,6 +331,7 @@ saveRDS(states_sf, "./data/states_sf.rds")
 saveRDS(counties_sf, "./data/counties_sf.rds")
 saveRDS(msa_sf, "./data/msa_sf.rds")
 saveRDS(economic_areas_sf, "./data/economic_areas_sf.rds")
+saveRDS(county_data, "./data/county_data.rds")
 #--------------------------------------------------------------------------------------------#
 #------------------------------------ End: Save GIS data ------------------------------------#
 #--------------------------------------------------------------------------------------------#
