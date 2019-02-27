@@ -149,11 +149,11 @@ options(warn = 0)
 
 # next we will read in the definition of the economic areas, note that this is slightly different 
 # than the definitions by the census bureau
-EA_link <- "http://clustermapping.us/sites/default/files/files/page/BEA%20Economic%20Areas%20and%20Counties.xls"
+economic_areas_link <- "http://clustermapping.us/sites/default/files/files/page/BEA%20Economic%20Areas%20and%20Counties.xls"
 
-download.file(EA_link, destfile = "./data/BEA_Economic_Areas_and_Counties.xls")
+download.file(economic_areas_link, destfile = "./data/BEA_Economic_Areas_and_Counties.xls")
 
-EA <- readxl::read_xls("./data/BEA_Economic_Areas_and_Counties.xls", sheet = 2)
+economic_areas <- readxl::read_xls("./data/BEA_Economic_Areas_and_Counties.xls", sheet = 2)
 #============================================================================================#
 #=================================== End: Regions Data ======================================#
 #============================================================================================#
@@ -302,10 +302,12 @@ regions_dt_counties <- dplyr::left_join(us_counties, regions_dt, by = "region_co
 
 # join the msa area data
 regions_dt_msa <- dplyr::left_join(us_cb, regions_dt, by = c("CBSAFP" = "region_code_t"))
+
+# join the economic areas
+regions_dt_economics <- dplyr::left_join(us_counties, economic_areas, by = c("region_code_t" = "FIPS"))
 #--------------------------------------------------------------------------------------------#
 #------------------------------------- End: Join the data -----------------------------------#
 #--------------------------------------------------------------------------------------------#
 #============================================================================================#
 #===================================== End: GIS Data ========================================#
 #============================================================================================#
-
