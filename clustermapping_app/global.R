@@ -1320,7 +1320,6 @@ pull_storm_gis_advisories <- function(storm_data_obj = NULL
   # get a list of the available advisories 
   gis_advisories <- gis_advisory(key = key)
   
-  
   if(length(gis_advisories) == 0){
     # this gis advisory data is not available for all storms. 
     stop("\tStorm has no gis advisories, quitting...\n")
@@ -1333,6 +1332,7 @@ pull_storm_gis_advisories <- function(storm_data_obj = NULL
   gis_advisories <- str_split_fixed(string = gis_advisories, pattern = ".zip", n = 2)[, 1]%>%
     unique()
   
+  adv_num_inv <- FALSE
   # if the user specified an advisory number, then just download that advisory GIS files
   if(!is.null(advisory_num)){
     # make sure the advisory number given is valid
@@ -1350,7 +1350,7 @@ pull_storm_gis_advisories <- function(storm_data_obj = NULL
   # user has asked for all the advisory GIS data to be downloaded and if not then 
   # just download the latest advisory data
   
-  if(adv_num_inv){
+  if(adv_num_inv | is.null(advisory_num)){
     if(download_all_advisories){
       invisible(cat("\tGetting data for all advisoris, this might take a while...\n"))
       # create an empty list to fill it later with the gis advisory data
