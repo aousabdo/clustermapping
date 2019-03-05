@@ -1428,7 +1428,7 @@ build_storm_map <- function(gis_adv_obj = NULL
   
   if(!is.list(gis_adv_obj))
     stop("gis_adv_obj needs to be a gis list downloaded with gis_download from the rrricanes library")
-  if(class(gis_adv_obj[[1]]) != "sp") stop("\tI need an sp-class object. Quitting...")
+  if(class(gis_adv_obj[[1]]) != "SpatialLinesDataFrame") stop("\tI need an sp-class object. Quitting...")
   
   # get the names of the gis object
   gis_obj_names <- names(gis_adv_obj) 
