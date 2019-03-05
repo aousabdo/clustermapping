@@ -1386,7 +1386,8 @@ build_storm_map <- function(gis_adv_obj = NULL
   # pull_storm_gis_advisories functions
   # providers_tile: providers tile, see providers
   
-  if(!is.list(gis_adv_obj)) stop("gis_adv_obj needs to be a gis list downloaded with gis_download from the rrricanes library")
+  if(!is.list(gis_adv_obj)) 
+    stop("gis_adv_obj needs to be a gis list downloaded with gis_download from the rrricanes library")
   
   # get the names of the gis object
   gis_obj_names <- names(gis_adv_obj) 
@@ -1414,7 +1415,7 @@ build_storm_map <- function(gis_adv_obj = NULL
   m <- addProviderTiles(m, providers_tile)
   
   # draw the 'cone of uncertainty'
-  m <- addPolygons(m, data = storm_pgn, color = "black", weight = "2", fillColor="red", fillOpacity = 0.3) 
+  m <- addPolygons(m, data = storm_pgn, color = "black", weight = "2", fillColor = "red", fillOpacity = 0.3) 
   
   # draw the predicted track
   m <- addPolylines(m, data = storm_lin) 
