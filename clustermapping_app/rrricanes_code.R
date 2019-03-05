@@ -34,7 +34,7 @@ pull_storm_data <- function(storm_name = NULL
     filter(Name == storm_name) %>%
     pull(Link) %>%
     get_storm_data(products = products_vec)
-
+  
   return(list(storm_data = storm_data))
 }
 
@@ -106,37 +106,74 @@ irma <- pull_storm_data(storm_name = "Hurricane Irma", storm_df = storms_list_df
 #   gis_download()
 
 pull_storm_gis_advisories <- function(storm_data_obj = NULL
+                                      , advisory_num = NULL
                                       , download_all_advisories = FALSE){
+  # Function to get gis storm advisories from the National Hurricane Center
+  
+  # fuction arguments
+  # storm_data_obj: an object that contains data about a given storm. This is usually the output of the 
+  # get_storm_data from the rrricanes package or the pull_storm_data function. This object must contain
+  # the "fstadv" product
+  # advisory_num: the advisory number to download
+  # download_all_advisories: download all available advisories. If this is set to FALSE, the function 
+  # will download the latest advisory
+  
   require(rrricanes)
   
   # get the key for the storm
   key <- storm_data_obj[["fstadv"]] %>% pull(Key) %>% first()
-
+  
+  # get a list of the available advisories 
   gis_advisories <- gis_advisory(key = key)
+  
+  
   if(length(gis_advisories) == 0){
+    # this gis advisory data is not available for all storms. 
     stop("\tStorm has no gis advisories, quitting...\n")
-  }else(invisible(cat("\tGetting advisories for storm key", key,"\n")))
-
+  }else{
+    invisible(cat("\tGetting advisories for storm key", key,"\n"))
+  }
+  
+  # get the names of advisories
   gis_advisories <- str_split_fixed(gis_advisories, "day_", n = 2)[, 2] 
   gis_advisories <- str_split_fixed(string = gis_advisories, pattern = ".zip", n = 2)[, 1]%>%
     unique()
   
-  if(download_all_advisories){
-    invisible(cat("\tGetting data for all advisoris, this might take a while...\n"))
-    # create an empty list
-    gis_advisories_list <- list()
-    for(i in 1:length(gis_advisories)){
-      invisible(cat("\tGetting data for advisory ", gis_advisories[i],"\n"))
-      gis_advisories_list[[i]] <- gis_advisory(key = key, advisory = gis_advisories[i]) %>%
+  # if the user specified an advisory number, then just download that advisory GIS files
+  if(!is.null(advisory_num)){
+    # make sure the advisory number given is valid
+    if(sum(advisory_num %in% gis_advisories) == 0){
+      invisible(cat("\tadvisory number supplied is not valid for selected storm...\n"))
+      adv_num_inv <- TRUE
+    }else{
+      gis_advisories_list <- gis_advisory(key = key, advisory = advisory_num) %>%
         gis_download()
     }
-  }else{
-    # if the user is not requesting to download all advisories, then just download the latest advisory
-    invisible(cat("\tGetting data for latest advisory...\n"))
-    gis_advisories_list <- gis_advisory(key = key, advisory = gis_advisories[length(gis_advisories)]) %>%
-      gis_download()
+    # if he instead wants to download all advisories, then do so
   }
-
+  
+  # if the advisory number given is found to be invalid, then we need to see if the 
+  # user has asked for all the advisory GIS data to be downloaded and if not then 
+  # just download the latest advisory data
+  
+  if(adv_num_inv){
+    if(download_all_advisories){
+      invisible(cat("\tGetting data for all advisoris, this might take a while...\n"))
+      # create an empty list to fill it later with the gis advisory data
+      gis_advisories_list <- list()
+      for(i in 1:length(gis_advisories)){
+        invisible(cat("\tGetting data for advisory ", gis_advisories[i],"\n"))
+        gis_advisories_list[[i]] <- gis_advisory(key = key, advisory = gis_advisories[i]) %>%
+          gis_download()
+      }
+    }else{
+      # if the user is not requesting to download all advisories, nor did he specify an advisory number, then 
+      # just download the latest advisory
+      invisible(cat("\tGetting data for latest advisory...\n"))
+      gis_advisories_list <- gis_advisory(key = key, advisory = gis_advisories[length(gis_advisories)]) %>%
+        gis_download()
+    }
+  }
   return(list(gis_advisories = gis_advisories, gis_advisories_data = gis_advisories_list))
 }
 
@@ -155,7 +192,7 @@ storm_map <- function(gis_adv_obj = NULL){
   storm_pts <- sf::st_as_sf(gis_adv_obj[[pts_obj]])
   
   labels <- storm_pts$DATELBL
- 
+  
   ############################################################
   # build a leaflet map
   
@@ -174,7 +211,7 @@ storm_map <- function(gis_adv_obj = NULL){
   # draw the predicted track positions
   m <- addCircleMarkers(m, data = storm_pts, color = "red", radius = 2, label = labels,
                         labelOptions = labelOptions(noHide = FALSE, textOnly = TRUE)) 
-
+  
   return(m)
 }
 
