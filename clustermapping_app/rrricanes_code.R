@@ -148,12 +148,14 @@ storm_map <- function(gis_adv_obj = NULL){
   
   labels <- storm_pts$DATELBL
  
-  # create a blank map
+  ############################################################
+  # build a leaflet map
+  
+  # start with a blank map
   m <- leaflet () 
   
   # add the basemap
   m <- addProviderTiles(m, providers$OpenStreetMap)
-  # m <- addProviderTiles(m , Esri.WorldStreetMap)
   
   # draw the 'cone of uncertainty'
   m <- addPolygons(m, data = storm_pgn, color = "black", weight = "2", fillColor="red", fillOpacity = 0.3) 
@@ -163,9 +165,8 @@ storm_map <- function(gis_adv_obj = NULL){
   
   # draw the predicted track positions
   m <- addCircleMarkers(m, data = storm_pts, color = "red", radius = 2, label = labels,
-                        labelOptions = labelOptions(noHide = TRUE, textOnly = TRUE)) 
+                        labelOptions = labelOptions(noHide = FALSE, textOnly = TRUE)) 
 
-  m
   return(m)
 }
 
