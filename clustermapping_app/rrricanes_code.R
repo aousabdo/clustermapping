@@ -178,19 +178,31 @@ pull_storm_gis_advisories <- function(storm_data_obj = NULL
 }
 
 
-storm_map <- function(gis_adv_obj = NULL){
+storm_map <- function(gis_adv_obj = NULL
+                      , providers_tile = providers$OpenStreetMap){
+  # function to make leaflet map for a given gis advisory object
+  
+  # function arguments
+  # gis_adv_obj: a gis advisory object, the output of gis_advisory %>% gis_download or
+  # pull_storm_gis_advisories functions
+  # providers_tile: providers tile, see providers
+  
   if(!is.list(gis_adv_obj)) stop("gis_adv_obj needs to be a gis list downloaded with gis_download from the rrricanes library")
+  
+  # get the names of the gis object
   gis_obj_names <- names(gis_adv_obj) 
-  print(gis_obj_names)
+  
+  # now get the names of the different gis components
   pgn_obj <- gis_obj_names[str_detect(gis_obj_names, "_pgn")]
   lin_obj <- gis_obj_names[str_detect(gis_obj_names, "_lin")]
   pts_obj <- gis_obj_names[str_detect(gis_obj_names, "_pts")]
   
-  print(pgn_obj)
+  # obtain the gis data for each gis class and convert it into an sf object
   storm_pgn <- sf::st_as_sf(gis_adv_obj[[pgn_obj]])
   storm_lin <- sf::st_as_sf(gis_adv_obj[[lin_obj]])
   storm_pts <- sf::st_as_sf(gis_adv_obj[[pts_obj]])
   
+  # get advisory labels
   labels <- storm_pts$DATELBL
   
   ############################################################
@@ -200,7 +212,7 @@ storm_map <- function(gis_adv_obj = NULL){
   m <- leaflet () 
   
   # add the basemap
-  m <- addProviderTiles(m, providers$OpenStreetMap)
+  m <- addProviderTiles(m, providers_tile)
   
   # draw the 'cone of uncertainty'
   m <- addPolygons(m, data = storm_pgn, color = "black", weight = "2", fillColor="red", fillOpacity = 0.3) 
@@ -210,9 +222,7 @@ storm_map <- function(gis_adv_obj = NULL){
   
   # draw the predicted track positions
   m <- addCircleMarkers(m, data = storm_pts, color = "red", radius = 2, label = labels,
-                        labelOptions = labelOptions(noHide = FALSE, textOnly = TRUE)) 
+                        labelOptions = labelOptions(noHide = FALSE, textOnly = F)) 
   
   return(m)
 }
-
-
