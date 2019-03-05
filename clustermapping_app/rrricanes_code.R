@@ -9,7 +9,15 @@ storms_list_df <- rrricanes::get_storms(years = 1998:2018, basins = c("AL", "EP"
 pull_storm_data <- function(storm_name = NULL
                             , storm_df = NULL
                             , products_vec = c("discus", "fstadv")){
-  # simple function to get storms data for a given storm
+  # simple function to get storms data from the National Hurricane Center databases
+  
+  # function arguments
+  # storm_name: exact storm name as in the National Hurricane Center database. Exampels are Hurricane Irma, 
+  #             Hurricane Harvey, etc.
+  # storm_df: a data frame containing a data about storms available in the NHC databases. This dataframe 
+  #           would contain the following columns: "Year"  "Name"  "Basin" "Link" 
+  # products_vec: products vector, this is the product argument for the get_storm_data from the rrricanes pacakge
+  
   require(rrricanes)
   
   # make sure we have the list of storms from the NHC
@@ -25,7 +33,7 @@ pull_storm_data <- function(storm_name = NULL
   storm_data <- storm_df %>%
     filter(Name == storm_name) %>%
     pull(Link) %>%
-    get_storm_data(products = c("discus", "fstadv"))
+    get_storm_data(products = products_vec)
 
   return(list(storm_data = storm_data))
 }
