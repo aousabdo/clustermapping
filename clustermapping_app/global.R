@@ -36,6 +36,7 @@ library(tidycensus)
 library(tigris)
 library(tmap)
 library(sf)
+library(leaflet)
 
 # supress warnings
 options(warn = -1)
