@@ -1290,7 +1290,7 @@ pull_storm_data <- function(storm_name = NULL
     pull(Link) %>%
     get_storm_data(products = products_vec)
   
-  return(list(storm_data = storm_data))
+  return(storm_data)
 }
 #========================================================================================#
 #================================ End: pull_storm_data ==================================#
