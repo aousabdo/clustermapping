@@ -1,7 +1,7 @@
 #######################################################################################
 #######################################################################################
 #######################################################################################
-######### clustermapping is a web application built using R. The app queries  #########
+######### clustermapping is a web application built using R. The app scrapes  #########
 ######### data from the clustermapping.us site.                               #########
 ######### Dr. Aous Abdo <aous.abdo@gmail.com>                                 ######### 
 #######################################################################################
@@ -29,7 +29,6 @@ library(shiny)
 library(purrr)
 library(scales)
 library(pryr)
-library(rrricanes)
 
 # GIS libraries
 library(tidycensus)
@@ -37,6 +36,14 @@ library(tigris)
 library(tmap)
 library(sf)
 library(leaflet)
+library(rrricanes)
+library(sp)
+
+# options for the sf package
+# these are imprtant to set otherwise some functions might not work
+
+options(tigris_class = "sf")
+options(tigris_use_cache = TRUE)
 
 # supress warnings
 options(warn = -1)
@@ -1470,4 +1477,72 @@ build_storm_map <- function(gis_adv_obj = NULL
 }
 #========================================================================================#
 #================================== End: build_storm_map ================================#
+#========================================================================================#
+
+#========================================================================================#
+#=================================== get_affected_areas =================================#
+#========================================================================================#
+get_affected_areas <- function(storm_polygon_sf = NULL
+                               , counties_sf_obj = NULL
+                               , states_sf_obj = NULL
+                               , msa_sf_obj = NULL
+                               , economic_areas_sf_obj = NULL
+                               , verbose = FALSE){
+  # this function takes in a track polygon of an incoming storm and returns 
+  # areas that are within that track. 
+  
+  # function arguments:
+  # storm_polygons_sf: an sf gis object giving the polygons of an incoming storm. This object could be 
+  # the output of the download_storm_gis_advisories function
+  # counties_sf_obj: This object contains the us counties with data from the clustermapping project
+  # states_sf_obj: This object contains the us states with data from the clustermapping project
+  # msa_sf_obj: This object contains the us msa regions with data from the clustermapping project
+  # economic_areas_sf_obj: This object contains the us economic areas with data from the clustermapping project
+  
+  # make sure the storm_polyhon_sf object is an sf object
+  if(class(storm_polygon_sf) != "sf"){
+    invisible(cat("\tstorm_polygons_sf object has to be a spatial object, checking if I can 
+                  convert it into one...\n"))
+    if(class(storm_polygon_sf) == "SpatialPolygonsDataFrame"){
+      invisible(cat("\tstorm_polygons_sf object given is a SpatialPolygonsDataFrame object, converting it into an sf object...\n"))
+      storm_polygon_sf <- st_as_sf(storm_polygon_sf)
+    }else{
+      invisible(stop("storm_polygons_obj is not a spatial object. Quitting..."))
+    }
+  }
+  
+  # first we'll work on the counties object
+  if(!is.null(counties_sf_obj)){
+    if(st_crs(storm_polygon_sf) != st_crs(counties_sf_obj)){
+      # make sure the storm_polyhons_sf advisory has the same crs as the counties sf object
+      if(verbose) invisible(cat("\tchanging the crs of the storms_polygons_sf object to match that of the counties_sf_obj object\n"))
+      st_crs(storm_polygon_sf) <- st_crs(counties_sf_obj)
+    }
+    
+    # subset the counties object to only include those inside the storm polygon
+    counties_affected <- counties_sf_obj[storm_polygon_sf, ]
+    
+    # counties_affected contains any county that touches the hurricane advisoty track
+    # to be more accurate, we can get only the counties that are totally 
+    # within the hurricane track
+    
+    # we need to get the indexes of counties that are totally within the storm polygons
+    counties_within_idx <- st_within(counties_sf_obj, storm_polygon_sf)
+    
+    # filter the new w1 object
+    counties_within_idx_2 <- map_lgl(counties_within_idx, function(x) {
+      if (length(x) == 1) {
+        return(TRUE)
+      } else {
+        return(FALSE)
+      }
+    })
+    
+    counties_within <- counties_sf_obj[counties_within_idx_2, ]
+  }
+  
+  return(list(counties_affected = counties_affected, counties_within = counties_within))
+}
+#========================================================================================#
+#================================ End: get_affected_areas ===============================#
 #========================================================================================#
