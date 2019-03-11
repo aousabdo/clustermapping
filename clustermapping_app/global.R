@@ -1602,29 +1602,11 @@ get_affected_areas <- function(storm_polygon_sf = NULL
       st_crs(storm_polygon_sf) <- st_crs(counties_sf_obj)
     }
     
-    # subset the counties object to only include those inside the storm polygon
-    counties_affected <- counties_sf_obj[storm_polygon_sf, ]
-    
-    # counties_affected contains any county that touches the hurricane advisoty track
-    # to be more accurate, we can get only the counties that are totally 
-    # within the hurricane track
-    
-    # we need to get the indexes of counties that are totally within the storm polygons
-    counties_within_idx <- st_within(counties_sf_obj, storm_polygon_sf)
-    
-    # filter the new counties_within_idx object
-    counties_within_idx_2 <- map_lgl(counties_within_idx, function(x) {
-      if (length(x) == 1) {
-        return(TRUE)
-      } else {
-        return(FALSE)
-      }
-    })
-    
-    # get those counties that are within the storm track
-    counties_within <- counties_sf_obj[counties_within_idx_2, ]
+    counties_affected_list <- subset_sf_obj(sf_obj_1 = counties_sf_obj, sf_obj_2 = storm_polygon_sf)
+    counties_affected <- counties_affected_list[[1]]
+    counties_within   <- counties_affected_list[[2]]
   }
-  
+    
   #------------------------------------------------------------------------------------------------------#
   #-------------------------------------- Get the states affected ---------------------------------------#
   #------------------------------------------------------------------------------------------------------#
@@ -1637,27 +1619,9 @@ get_affected_areas <- function(storm_polygon_sf = NULL
       st_crs(storm_polygon_sf) <- st_crs(states_sf_obj)
     }
     
-    # subset the states object to only include those inside the storm polygon
-    states_affected <- states_sf_obj[storm_polygon_sf, ]
-    
-    # states_affected contains any states that touches the hurricane advisoty track
-    # to be more accurate, we can get only the states that are totally 
-    # within the hurricane track
-    
-    # we need to get the indexes of states that are totally within the storm polygons
-    states_within_idx <- st_within(states_sf_obj, storm_polygon_sf)
-    
-    # filter the new states_within_idx object
-    states_within_idx_2 <- map_lgl(states_within_idx, function(x) {
-      if (length(x) == 1) {
-        return(TRUE)
-      } else {
-        return(FALSE)
-      }
-    })
-    
-    # get those states that are within the storm track
-    states_within <- states_sf_obj[states_within_idx_2, ]
+    states_affected_list <- subset_sf_obj(sf_obj_1 = states_sf_obj, sf_obj_2 = storm_polygon_sf)
+    states_affected <- states_affected_list[[1]]
+    states_within   <- states_affected_list[[2]]
   }
   
   #------------------------------------------------------------------------------------------------------#
@@ -1672,27 +1636,9 @@ get_affected_areas <- function(storm_polygon_sf = NULL
       st_crs(storm_polygon_sf) <- st_crs(msa_sf_obj)
     }
     
-    # subset the msa object to only include those inside the storm polygon
-    msa_affected <- msa_sf_obj[storm_polygon_sf, ]
-    
-    # msa_affected contains any msa that touches the hurricane advisoty track
-    # to be more accurate, we can get only the msa that are totally 
-    # within the hurricane track
-    
-    # we need to get the indexes of msa that are totally within the storm polygons
-    msa_within_idx <- st_within(msa_sf_obj, storm_polygon_sf)
-    
-    # filter the new msa_within_idx object
-    msa_within_idx_2 <- map_lgl(msa_within_idx, function(x) {
-      if (length(x) == 1) {
-        return(TRUE)
-      } else {
-        return(FALSE)
-      }
-    })
-    
-    # get those msa that are within the storm track
-    msa_within <- msa_sf_obj[msa_within_idx_2, ]
+    msa_affected_list <- subset_sf_obj(sf_obj_1 = msa_sf_obj, sf_obj_2 = storm_polygon_sf)
+    msa_affected <- msa_affected_list[[1]]
+    msa_within   <- msa_affected_list[[2]]
   }
   
   #------------------------------------------------------------------------------------------------------#
@@ -1706,28 +1652,10 @@ get_affected_areas <- function(storm_polygon_sf = NULL
       if(verbose) invisible(cat("\tchanging the crs of the storms_polygons_sf object to match that of the economic_areas_sf_obj object\n"))
       st_crs(storm_polygon_sf) <- st_crs(economic_areas_sf_obj)
     }
-    
-    # subset the economic_areas object to only include those inside the storm polygon
-    economic_areas_affected <- economic_areas_sf_obj[storm_polygon_sf, ]
-    
-    # economic_areas_affected contains any economic_areas that touches the hurricane advisoty track
-    # to be more accurate, we can get only the economic_areas that are totally 
-    # within the hurricane track
-    
-    # we need to get the indexes of economic_areas that are totally within the storm polygons
-    economic_areas_within_idx <- st_within(economic_areas_sf_obj, storm_polygon_sf)
-    
-    # filter the new economic_areas_within_idx object
-    economic_areas_within_idx_2 <- map_lgl(economic_areas_within_idx, function(x) {
-      if (length(x) == 1) {
-        return(TRUE)
-      } else {
-        return(FALSE)
-      }
-    })
-    
-    # get those economic_areas that are within the storm track
-    economic_areas_within <- economic_areas_sf_obj[economic_areas_within_idx_2, ]
+
+    economic_areas_affected_list <- subset_sf_obj(sf_obj_1 = economic_areas_sf_obj, sf_obj_2 = storm_polygon_sf)
+    economic_areas_affected <- economic_areas_affected_list[[1]]
+    economic_areas_within   <- economic_areas_affected_list[[2]]
   }
   
   returned_list <- list(counties_affected = counties_affected
