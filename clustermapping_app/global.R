@@ -1457,21 +1457,57 @@ build_storm_map <- function(gis_adv_obj = NULL
   ############################################################
   # build a leaflet map
   
-  # start with a blank map
-  m <- leaflet () 
-  
-  # add the basemap
-  m <- addProviderTiles(m, providers_tile)
+  # start with a blank map and add provided tiles
+  m <- leaflet(options =leafletOptions(dragging = TRUE,
+                                minZoom = 3,
+                                maxZoom = 18)) %>% 
+    addTiles(group = "OSM") %>%
+    addProviderTiles("Esri.WorldTopoMap", group = "Esri.WorldTopoMap") %>%
+    addProviderTiles("Esri.WorldImagery", group = "Esri.WorldImagery") %>%
+    addProviderTiles("CartoDB", group = "Carto") %>%
+    addProviderTiles("Esri", group = "Esri") %>%
+    addProviderTiles("NASAGIBS.ViirsEarthAtNight2012", group = "NASA")
   
   # draw the 'cone of uncertainty'
-  m <- addPolygons(m, data = storm_pgn, color = "black", weight = "2", fillColor = "red", fillOpacity = 0.3) 
+  m <- m %>% addPolygons(data = storm_pgn
+                         , color = "black"
+                         , weight = "2"
+                         , fillColor = "red"
+                         , fillOpacity = 0.3
+                         , group = "Predicted Storm Cone of Uncertainity") 
   
   # draw the predicted track
-  m <- addPolylines(m, data = storm_lin) 
-  
+  m <- m %>% addPolylines(data = storm_lin
+                          , group = "Predicted Storm Track")
+
   # draw the predicted track positions
-  m <- addCircleMarkers(m, data = storm_pts, color = "red", radius = 2, label = labels,
-                        labelOptions = labelOptions(noHide = TRUE, textOnly = TRUE)) 
+  m <- m %>% addCircleMarkers(data = storm_pts
+                              , color = "red"
+                              , radius = 2
+                              , label = labels
+                              , group = "Predicted Track Positions"
+                              , labelOptions = labelOptions(noHide = FALSE, textOnly = TRUE))
+  
+  m <- m %>% addLayersControl(baseGroups = c("OSM"
+                                             , "Esri"
+                                             , "Esri.WorldTopoMap"
+                                             , "Esri.WorldImagery"
+                                             ,"Carto"
+                                             , "NASA"),
+                              overlayGroups = c("Predicted Storm Cone of Uncertainity"
+                                                , "Predicted Storm Track"
+                                                , "Predicted Track Positions"))
+  
+  m <- m %>% 
+    leaflet.extras::addSearchOSM() %>% 
+    leaflet.extras::addResetMapButton()
+  
+  Bounds <- st_bbox(storm_pgn)
+  print(Bounds)
+  m <- m %>% fitBounds(lng1 = Bounds[["xmin"]]
+                       , lat1 = Bounds[["ymin"]]
+                       , lng2 = Bounds[["xmax"]]
+                       , lat2 = Bounds[["ymax"]])
   
   return(m)
 }
@@ -1537,7 +1573,7 @@ subset_sf_obj <- function(sf_obj_1 = NULL
     }
   })
   
-  # get those counties that are within the storm track
+  # get those areas that are within the second object            
   sf_obj_1_within <- sf_obj_1[sf_obj_1_within_2, ]
   
   return(list(sf_obj_1_subset = sf_obj_1_subset, sf_obj_1_within = sf_obj_1_within))
@@ -1606,7 +1642,7 @@ get_affected_areas <- function(storm_polygon_sf = NULL
     counties_affected <- counties_affected_list[[1]]
     counties_within   <- counties_affected_list[[2]]
   }
-    
+  
   #------------------------------------------------------------------------------------------------------#
   #-------------------------------------- Get the states affected ---------------------------------------#
   #------------------------------------------------------------------------------------------------------#
@@ -1652,7 +1688,7 @@ get_affected_areas <- function(storm_polygon_sf = NULL
       if(verbose) invisible(cat("\tchanging the crs of the storms_polygons_sf object to match that of the economic_areas_sf_obj object\n"))
       st_crs(storm_polygon_sf) <- st_crs(economic_areas_sf_obj)
     }
-
+    
     economic_areas_affected_list <- subset_sf_obj(sf_obj_1 = economic_areas_sf_obj, sf_obj_2 = storm_polygon_sf)
     economic_areas_affected <- economic_areas_affected_list[[1]]
     economic_areas_within   <- economic_areas_affected_list[[2]]
