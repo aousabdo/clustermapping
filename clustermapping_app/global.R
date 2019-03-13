@@ -64,6 +64,12 @@ region_names <- regions_dt[region_type_t != "country", unique(region_short_name_
 clusters_list  <- clusters_data$clusters_list
 clusters_avlbl <- clusters_data$clusters_avlbl
 
+# load gis data
+counties_sf       <- readRDS("./data/counties_sf.rds")
+states_sf         <- readRDS("./data/states_sf.rds")
+msa_sf            <- readRDS("./data/msa_sf.rds")
+economic_areas_sf <- readRDS("./data/economic_areas_sf.rds")
+
 #========================================================================================#
 #=================================== get_strong_clusters ================================#
 #========================================================================================#
