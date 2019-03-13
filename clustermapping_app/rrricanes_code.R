@@ -48,7 +48,7 @@ katrina_data <- get_storm_data(links = katrina_link, products = products_vec)
 ds <- katrina_data
 
 ds_har <-storms_list_df %>%
-  filter(Name == "Hurricane Harvey") %>%
+  filter(Name == "Hurricane Irma") %>%
   pull(Link) %>%
   get_storm_data(products = c("discus", "fstadv"))
 
@@ -222,7 +222,65 @@ storm_map <- function(gis_adv_obj = NULL
   
   # draw the predicted track positions
   m <- addCircleMarkers(m, data = storm_pts, color = "red", radius = 2, label = labels,
-                        labelOptions = labelOptions(noHide = FALSE, textOnly = F)) 
+                        labelOptions = labelOptions(noHide = TRUE,  textOnly = TRUE)) 
   
   return(m)
 }
+
+
+rm(list=ls())
+
+source('global.R')
+
+storms_list_df <- rrricanes::get_storms(years = 1998:2018, basins = c("AL", "EP"))
+
+
+irma <- pull_storm_data(storm_name = "Hurricane Irma"
+                        , storm_df = storms_list_df
+                        , products_vec = c("discus", "fstadv"))
+
+
+irma_gis_advisories_avlbl <- pull_storm_gis_advisories(storm_data_obj = irma)
+
+irma_gis_advisories_data_all <- download_storm_gis_advisories(gis_advisories_vec = irma_gis_advisories_avlbl
+                                                              , storm_key = "al112017"
+                                                              # , advisory_num = "009"
+                                                              , download_all_advisories = TRUE
+                                                              , storm_data_obj = irma$storm_data)
+
+irma_gis_advisories_data <- download_storm_gis_advisories(gis_advisories_vec = irma_gis_advisories_avlbl
+                                                          , storm_key = "al112017"
+                                                          , advisory_num = "009"
+                                                          , storm_data_obj = irma$storm_data)
+
+build_storm_map(gis_adv_obj = irma_gis_advisories_data)
+
+build_storm_map(gis_adv_obj = irma_gis_advisories_data_all[[23]])
+
+# get counties within a hurricane advisory
+irma_pgn_sf <- irma_gis_advisories_data_all[[84]]$al112017_052_5day_pgn %>% st_as_sf()
+
+# make sure the hurricane advisory has the same crs as the counties sf object
+st_crs(irma_pgn_sf) <- st_crs(counties_sf)
+
+# now subset counties that are inside the hurricane advisory
+p1 <- counties_sf[irma_pgn_sf, ]
+
+# p1 contains any county that touches the hurricane advisoty track
+# to be more accurate, we can get only the counties that are totally 
+# within the hurricane track
+
+w1 <- st_within(counties_sf, irma_pgn_sf)
+
+# filter the new w1 object
+w2 <- map_lgl(w1, function(x) {
+  if (length(x) == 1) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+})
+
+p2 <- counties_sf[w2, ]
+
+# p2 now only contains the counties that are inside the hurricane track
