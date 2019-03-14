@@ -227,7 +227,6 @@ storm_map <- function(gis_adv_obj = NULL
   return(m)
 }
 
-
 rm(list=ls())
 
 source('global.R')
@@ -284,3 +283,22 @@ w2 <- map_lgl(w1, function(x) {
 p2 <- counties_sf[w2, ]
 
 # p2 now only contains the counties that are inside the hurricane track
+
+storm <- irma_gis_advisories_data_all[[15]]
+
+storm_polygon_name <- names(storm)[str_detect(names(storm), "pgn")]
+irma_pgn_sf <- storm[[storm_polygon_name]] %>% st_as_sf()
+
+affectd <- get_affected_areas(storm_polygon_sf = irma_pgn_sf
+                              , counties_sf_obj = counties_sf
+                              , states_sf_obj = states_sf
+                              , msa_sf_obj = msa_sf
+                              , economic_areas_sf_obj = economic_areas_sf
+                              , verbose = TRUE)
+
+build_storm_map(gis_adv_obj = storm
+                , counties_affected = affectd$counties_affected)
+
+build_storm_map(gis_adv_obj = storm
+                , counties_affected = affectd$counties_affected
+                , counties_within = affectd$counties_within)
