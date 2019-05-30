@@ -70,6 +70,9 @@ states_sf         <- readRDS("./data/states_sf.rds")
 msa_sf            <- readRDS("./data/msa_sf.rds")
 economic_areas_sf <- readRDS("./data/economic_areas_sf.rds")
 
+# read storm data
+irma_gis_advisories_avlbl    <- readRDS("./data/irma_gis_advisories_avlbl.rds")
+irma_gis_advisories_data_all <- readRDS("./data/irma_gis_advisories_data_all.rds")
 #========================================================================================#
 #=================================== get_strong_clusters ================================#
 #========================================================================================#
@@ -1432,13 +1435,18 @@ download_storm_gis_advisories <- function(gis_advisories_vec = NULL
 #==================================== build_storm_map ===================================#
 #========================================================================================#
 build_storm_map <- function(gis_adv_obj = NULL
-                            , providers_tile = providers$OpenStreetMap){
+                            , counties_affected = NULL
+                            , counties_within = NULL
+                            , msa_affected = NULL
+                            , msa_within = NULL
+                            , economic_areas_affected = NULL
+                            , economic_areas_within = NULL
+                            , center_on_storm = FALSE){
   # function to make leaflet map for a given gis advisory object
   
   # function arguments
   # gis_adv_obj: a gis advisory object, the output of gis_advisory %>% gis_download or
   # pull_storm_gis_advisories functions
-  # providers_tile: providers tile, see providers
   
   if(!is.list(gis_adv_obj))
     stop("gis_adv_obj needs to be a gis list downloaded with gis_download from the rrricanes library")
@@ -1508,12 +1516,32 @@ build_storm_map <- function(gis_adv_obj = NULL
     leaflet.extras::addSearchOSM() %>% 
     leaflet.extras::addResetMapButton()
   
-  Bounds <- st_bbox(storm_pgn)
-  print(Bounds)
-  m <- m %>% fitBounds(lng1 = Bounds[["xmin"]]
-                       , lat1 = Bounds[["ymin"]]
-                       , lng2 = Bounds[["xmax"]]
-                       , lat2 = Bounds[["ymax"]])
+  if(center_on_storm){
+    Bounds <- st_bbox(storm_pgn)
+    
+    m <- m %>% clearBounds() %>% 
+      fitBounds(lng1 = Bounds[["xmin"]]
+                , lat1 = Bounds[["ymin"]]
+                , lng2 = Bounds[["xmax"]]
+                , lat2 = Bounds[["ymax"]])
+    
+  }else{
+    m <- m %>% clearBounds %>% setView(lng = -93.85, lat = 37.45, zoom = 4)
+    }
+  
+  if(!is.null(counties_affected)){
+    m <- m %>% addPolygons(data = counties_affected
+                           , color = "red"
+                           , fillColor = "red"
+                           , weight = 0.25)
+  }
+  
+  if(!is.null(counties_within)){
+    m <- m %>% addPolygons(data = counties_within
+                           , color = "black"
+                           , fillColor = "black"
+                           , weight = 0.25)
+  }
   
   return(m)
 }
@@ -1593,7 +1621,7 @@ subset_sf_obj <- function(sf_obj_1 = NULL
 #========================================================================================#
 get_affected_areas <- function(storm_polygon_sf = NULL
                                , counties_sf_obj = NULL
-                               , states_sf_obj = NULL
+                               , states_sf_obj = states_sf
                                , msa_sf_obj = NULL
                                , economic_areas_sf_obj = NULL
                                , verbose = FALSE){
@@ -1633,6 +1661,23 @@ get_affected_areas <- function(storm_polygon_sf = NULL
   economic_areas_within   <- NULL
   
   #------------------------------------------------------------------------------------------------------#
+  #-------------------------------------- Get the states affected ---------------------------------------#
+  #------------------------------------------------------------------------------------------------------#
+  
+  # first we'll try to get the states affected, this will reduce computation time for the rest of the areas
+  if(!is.null(states_sf_obj)){
+    if(st_crs(storm_polygon_sf) != st_crs(states_sf_obj)){
+      # make sure the storm_polyhons_sf advisory has the same crs as the states sf object
+      if(verbose) invisible(cat("\tchanging the crs of the storms_polygons_sf object to match that of the states_sf_obj object\n"))
+      st_crs(storm_polygon_sf) <- st_crs(states_sf_obj)
+    }
+    
+    states_affected_list <- subset_sf_obj(sf_obj_1 = states_sf_obj, sf_obj_2 = storm_polygon_sf)
+    states_affected <- states_affected_list[[1]]
+    states_within   <- states_affected_list[[2]]
+  }
+  
+  #------------------------------------------------------------------------------------------------------#
   #-------------------------------------- Get the counties affected -------------------------------------#
   #------------------------------------------------------------------------------------------------------#
   
@@ -1644,26 +1689,17 @@ get_affected_areas <- function(storm_polygon_sf = NULL
       st_crs(storm_polygon_sf) <- st_crs(counties_sf_obj)
     }
     
-    counties_affected_list <- subset_sf_obj(sf_obj_1 = counties_sf_obj, sf_obj_2 = storm_polygon_sf)
-    counties_affected <- counties_affected_list[[1]]
-    counties_within   <- counties_affected_list[[2]]
-  }
-  
-  #------------------------------------------------------------------------------------------------------#
-  #-------------------------------------- Get the states affected ---------------------------------------#
-  #------------------------------------------------------------------------------------------------------#
-  
-  # first we'll work on the counties object
-  if(!is.null(states_sf_obj)){
-    if(st_crs(storm_polygon_sf) != st_crs(states_sf_obj)){
-      # make sure the storm_polyhons_sf advisory has the same crs as the states sf object
-      if(verbose) invisible(cat("\tchanging the crs of the storms_polygons_sf object to match that of the states_sf_obj object\n"))
-      st_crs(storm_polygon_sf) <- st_crs(states_sf_obj)
+    # now to reduce the computation time, we subset the counties object to only include counties in 
+    # in the affected states
+    if(!is.null(states_affected)){
+      counties_sf_sub <- counties_sf_obj %>% filter(STATEFP %in% states_affected$STATEFP)
+    }else{
+      counties_sf_sub <- counties_sf_obj
     }
     
-    states_affected_list <- subset_sf_obj(sf_obj_1 = states_sf_obj, sf_obj_2 = storm_polygon_sf)
-    states_affected <- states_affected_list[[1]]
-    states_within   <- states_affected_list[[2]]
+    counties_affected_list <- subset_sf_obj(sf_obj_1 = counties_sf_sub, sf_obj_2 = storm_polygon_sf)
+    counties_affected <- counties_affected_list[[1]]
+    counties_within   <- counties_affected_list[[2]]
   }
   
   #------------------------------------------------------------------------------------------------------#
@@ -1695,7 +1731,15 @@ get_affected_areas <- function(storm_polygon_sf = NULL
       st_crs(storm_polygon_sf) <- st_crs(economic_areas_sf_obj)
     }
     
-    economic_areas_affected_list <- subset_sf_obj(sf_obj_1 = economic_areas_sf_obj, sf_obj_2 = storm_polygon_sf)
+    # now to reduce the computation time, we subset the economic areas object to only include those in 
+    # in the affected states
+    if(!is.null(states_affected)){
+      economic_areas_sf_sub <- economic_areas_sf_obj %>% filter(STATEFP %in% states_affected$STATEFP)
+    }else{
+      economic_areas_sf_sub <- economic_areas_sf_obj
+    }
+    
+    economic_areas_affected_list <- subset_sf_obj(sf_obj_1 = economic_areas_sf_sub, sf_obj_2 = storm_polygon_sf)
     economic_areas_affected <- economic_areas_affected_list[[1]]
     economic_areas_within   <- economic_areas_affected_list[[2]]
   }

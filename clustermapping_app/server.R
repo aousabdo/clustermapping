@@ -1,21 +1,70 @@
-#######################################################################################
-#######################################################################################
-#######################################################################################
-######### clustermapping is a web application built using R. The app queries  #########
-######### data from the clustermapping.us site.                               #########
-######### Dr. Aous Abdo <aous.abdo@gmail.com>                                 ######### 
-#######################################################################################
-#######################################################################################
-#######################################################################################
+library(leaflet)
+library(RColorBrewer)
+library(scales)
+library(lattice)
+library(dplyr)
+library(data.table)
+library(leaflet.extras)
 
-# start with a clean slate as always
-rm(list = ls())
+source('global.R')
 
-# most of the heavy lifting is in the global.R file, source that to get access to all the 
-# functions in that file
-source("./global.R")
-
-shinyServer(function(input, output) {
+function(input, output, session) {
+  
+  #################################################################################################
+  ################################# build initial leaflet map #####################################
+  #################################################################################################
+  
+  #-----------------------------------------------------------------------------------------------#
+  #-------------------------------- strom_data reactive function ---------------------------------#
+  #-----------------------------------------------------------------------------------------------#
+  storm_data <- reactive({
+    # this reactive function will return a list which gives storm data from NHC
+    # and a list of affected area
+    
+    # get information about the advisory
+    storm <- irma_gis_advisories_data_all[[input$advisory_number]]
+    
+    
+    # get the polygons for the advisory
+    storm_polygon_name <- names(storm)[str_detect(names(storm), "pgn")]
+    
+    # conver the advisory polygons to sf object
+    irma_pgn_sf <- storm[[storm_polygon_name]] %>% st_as_sf()
+    
+    # now we call the get_affected_areas function which will return a list containing the
+    # storms info and a list of affected areas
+    affected <- get_affected_areas(storm_polygon_sf = irma_pgn_sf
+                                   , counties_sf_obj = counties_sf
+                                   # , states_sf_obj = states_sf
+                                   # , msa_sf_obj = msa_sf
+                                   # , economic_areas_sf_obj = economic_areas_sf
+                                   , verbose = TRUE)
+    
+    return(list(storm = storm, affected = affected))
+  })
+  
+  #-----------------------------------------------------------------------------------------------#
+  #---------------------------------- create initial leaflet map ---------------------------------#
+  #-----------------------------------------------------------------------------------------------#
+  # Create the map
+  output$map <- renderLeaflet({
+    
+    # get storm data
+    tmp <- storm_data()
+    storm    <- tmp$storm # storm data
+    affected <<- tmp$affected # affected areas list
+    
+    m <- build_storm_map(gis_adv_obj = storm
+                         , counties_affected = affected$counties_affected
+                         , counties_within = affected$counties_within
+                         , center_on_storm = F)
+    # if(input$center_on_storm) m <- m %>% clearBounds %>% setView(lng = -93.85, lat = 37.45, zoom = 4)
+    return(m)
+  })
+  #################################################################################################
+  ############################## End: build initial leaflet map ###################################
+  #################################################################################################
+  
   
   #===================================================================================#
   #================================ Reactive Functions ===============================#
@@ -27,11 +76,23 @@ shinyServer(function(input, output) {
   #-----------------------------------------------------------------------------------#
   
   strong_clusters_fun <- reactive({
+    region_name_reactive <- storm_data()$affected$counties_affected$region_short_name_t
+    
+    # just select the first region for now
+    region_name_reactive <- region_name_reactive[1]
+
+    # if the storm hasn't made land fall, there won't be any affected areas and the region_name_reactive
+    # will be an NA. If so, we need to handle this "error"
+    
+    if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
+    
     # this reactive function calls the function that gets the strong clusters for a given region and year
-    get_strong_clusters(region_name = input$region_name
-                        , regions_dt = regions_dt
-                        , year_selected = input$year
-                        , meta_data_list = meta_data)
+    strong_clusters <<- get_strong_clusters(region_name = region_name_reactive 
+                                            , regions_dt = regions_dt
+                                            , year_selected = input$year
+                                            , meta_data_list = meta_data)
+    
+    return(strong_clusters)
   })
   
   #-----------------------------------------------------------------------------------#
@@ -41,7 +102,7 @@ shinyServer(function(input, output) {
   #-----------------------------------------------------------------------------------#
   #---------------------------------- cluster_data_fun -------------------------------#
   #-----------------------------------------------------------------------------------#
-
+  
   cluster_data_fun <- reactive({
     # reactive function to call the get_cluster_data for a given cluster
     
@@ -92,16 +153,22 @@ shinyServer(function(input, output) {
     # cluster_name       <- cluster_data_fun()$related_clusters_dt$parent_cluster_name %>% unique() %>% as.character()
     
     # get region type
-    region_type        <- regions_dt[region_short_name_t == input$region_name, region_type_t]
+    affected <<- storm_data()$affected 
+    
+    region_name_reactive <- affected$counties_affected$region_short_name_t
+    region_name_reactive <- region_name_reactive[1]
+    if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
+    region_type          <- regions_dt[region_short_name_t == region_name_reactive, region_type_t]
     
     # call the get_region_clusters function
     region_clusters_dt <- get_region_clusters(cluster = "all"
-                                              , region_name = input$region_name
+                                              , region_name = region_name_reactive
                                               , region_type = region_type
                                               , regions_dt = regions_dt
                                               , year_selected = "all"
                                               , cluster_selected = "all"
                                               , meta_data_list = meta_data)
+    
     return(region_clusters_dt)
   })
   
@@ -114,7 +181,7 @@ shinyServer(function(input, output) {
   #-----------------------------------------------------------------------------------#
   
   cluster_plots_fun <- reactive({
-    # this is the reactive function that calls the functino which makes cluster plots
+    # this is the reactive function that calls the function which makes cluster plots
     # mainly build_cluster_plots
     
     # get regions clusters table
@@ -124,8 +191,6 @@ shinyServer(function(input, output) {
     region_clusters_dt <- add_short_names(clusters_dt = region_clusters_dt
                                           , clusters_list_input = clusters_list
                                           , by_column = "cluster_code")
-    
-    region_cluster_dt_out <<- copy(region_clusters_dt)
     
     # now call the build_cluster_plots function
     build_cluster_plots(region_clusters_dt = region_clusters_dt
@@ -169,7 +234,7 @@ shinyServer(function(input, output) {
     
     # don't return an error if there is no data in the related clusters table
     if(nrow(cluster_data$related_clusters_dt) == 0) return(NULL)
-
+    
     # call the function which builds the network visulizations    
     build_network_viz(cluster_data = cluster_data)
   })
@@ -192,6 +257,11 @@ shinyServer(function(input, output) {
     # It is better to use the short names since it will help us with the real-estate on the plots
     strong_clusters[, cluster_name_2 := paste0(cluster_short_name, ", Rank: ", cluster_pos)]
     
+    region_name_reactive <- storm_data()$affected$counties_affected$region_short_name_t
+    region_name_reactive <- region_name_reactive[1]
+    
+    if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
+    
     # make a barplot of the strong clusters
     plot_ly(data = strong_clusters 
             , x = ~emp_tl
@@ -203,7 +273,7 @@ shinyServer(function(input, output) {
                             , "Local Rank:", cluster_pos, "<br>"
                             , "Employment:", emp_tl)
             , source = "strong_clusters_barplot") %>%
-      layout(title = paste0("Strong Clusters in ", input$region_name, ", ", input$year)  
+      layout(title = paste0("Strong Clusters in ", region_name_reactive, ", ", input$year)  
              , xaxis = list(title = "Employment", showgrid = TRUE, zeroline = TRUE, showticklabels = TRUE)
              , yaxis = list(title = "",showgrid = FALSE, zeroline = TRUE, showticklabels = TRUE)
              , margin = list(l = 350, r = 50, b = 50, t = 50, pad = 4))
@@ -216,11 +286,11 @@ shinyServer(function(input, output) {
   #-----------------------------------------------------------------------------------#
   #------------------------------------ donut_chart ----------------------------------#
   #-----------------------------------------------------------------------------------#
-
+  
   donut_chart <- reactive({
     # reactive function to create donut chart
     cluster_plots_fun()$donut_chart
-    })
+  })
   
   #-----------------------------------------------------------------------------------#
   #--------------------------------- End: donut_chart --------------------------------#
@@ -243,13 +313,25 @@ shinyServer(function(input, output) {
     
     # find out if the clusters returned from strong_clusters_fun is a strong 
     # cluster or not
-    is_strong_cluster <- strong_clusters_fun()[["is_strong_cluster"]]
     
-    # return appropriate text
-    if(is_strong_cluster) {
-      paste0("Strong Clusters in ", input$region_name, ", ", input$year)
+    strong_clusters <- strong_clusters_fun()
+    
+    if(!is.null(strong_clusters)){
+      is_strong_cluster <- strong_clusters_fun()[["is_strong_cluster"]]
+      
+      region_name_reactive <- storm_data()$affected$counties_affected$region_short_name_t
+      region_name_reactive <- region_name_reactive[1]
+      
+      if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
+      
+      # return appropriate text
+      if(is_strong_cluster) {
+        paste0("Strong Clusters in ", region_name_reactive, ", ", input$year)
+      }else{
+        paste0("Clusters in ", region_name_reactive, ", ", input$year)
+      }
     }else{
-      paste0("Clusters in ", input$region_name, ", ", input$year)
+      paste0("No regions are affected")
     }
   })
   
@@ -273,7 +355,7 @@ shinyServer(function(input, output) {
   output$cluster_emp_plot_2 <- plotly::renderPlotly({
     cluster_plots_fun()$cluster_emp
   })
-
+  
   # cluster wages plot  
   output$cluster_wages <- plotly::renderPlotly(cluster_plots_fun()$cluster_wages)
   
@@ -292,7 +374,12 @@ shinyServer(function(input, output) {
     
     # get the selected cluster by the user
     selected_cluster <- cluster_data_fun()$related_clusters_dt$parent_cluster_code %>% unique()
-
+    
+    region_name_reactive <- storm_data()$affected$counties_affected$region_short_name_t
+    region_name_reactive <- region_name_reactive[1]
+    
+    if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
+    
     # build the network visulaization
     vis <- build_graph_vis(related_cluster_input = all_related_clusters
                            , clusters_avlbl_input = clusters_avlbl
@@ -300,7 +387,7 @@ shinyServer(function(input, output) {
                            , selected_cluster = selected_cluster
                            , visManipulation = F
                            , cluster_network_positions_file = "./data/cluster_network_positions.Rds"
-                           , region_name = input$region_name)[[3]]
+                           , region_name = region_name_reactive)[[3]]
     return(vis)
   }) 
   
@@ -393,4 +480,4 @@ shinyServer(function(input, output) {
   #===================================================================================#
   #================================== End: Outputs ===================================#
   #===================================================================================#
-})
+}
