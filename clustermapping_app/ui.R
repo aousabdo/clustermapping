@@ -1,83 +1,118 @@
-#######################################################################################
-#######################################################################################
-#######################################################################################
-######### clustermapping is a web application built using R. The app queries  #########
-######### data from the clustermapping.us site.                               #########
-######### Dr. Aous Abdo <aous.abdo@gmail.com>                                 ######### 
-#######################################################################################
-#######################################################################################
-#######################################################################################
+library(leaflet)
 
-source('global.R')
+# Choices for drop-downs
+vars <- c(
+  "Is SuperZIP?" = "superzip",
+  "Centile score" = "centile",
+  "College education" = "college",
+  "Median income" = "income",
+  "Population" = "adultpop"
+)
 
-# Define UI for application that draws a histogram
-shinyUI(fluidPage(
-  
-  # Application title
-  titlePanel("Cluster Mapping"),
-  
-  # Sidebar with a slider input for number of bins 
-  sidebarLayout(fluid = TRUE, 
-                sidebarPanel(width = 2,
-                             selectInput(inputId = "region_name"
-                                         , label = "Select a Region"
-                                         , choices = region_names), 
-                             selectInput(inputId = "year"
-                                         , label = "Select a Year"
-                                         , choices = meta_data$years_avlbl
-                                         , selected = max(meta_data$years_avlbl))
-                             # , actionButton("getNodes", "Get nodes")
-                             # , actionButton("getEdges", "Get Edges")
-                ),
-                
-                # Show a plot of the generated distribution
-                mainPanel(tabsetPanel(
-                  tabPanel("Related Clusters"
-                           , h1(textOutput("region_cluster_header"))
-                           , br()
-                           , br()
-                           , br()
-                           , plotly::plotlyOutput("strong_clusters_plot", height = "auto")
-                           , br()
-                           , br()
-                           , br()
-                           , br()
-                           , visNetworkOutput("vizNetwork_advanced", height = "900px", width = "1000px")
-                           , br()
-                           , br()
-                           , br()
-                           , br()
-                           , plotly::plotlyOutput("donut_chart")
-                           , plotly::plotlyOutput("cluster_emp_plot")
-                           # , splitLayout(plotlyOutput("donut_chart")
-                           #               , plotlyOutput("cluster_emp_plot")
-                           #               , cellWidths = c("50%", "50%"))
-                           # , plotly::plotlyOutput("combined_plots_1", height = "auto", width = "1200")
-                           # , DT::dataTableOutput("strong_clusters")
-                           # , sankeyNetworkOutput("sankeyNetwork_Viz")
-                           # , visNetworkOutput("vizNetwork_basic")
-                           # , textOutput("region_clusters")
-                           
-                  ),
-                  tabPanel("Region Figures"
-                           # , plotly::plotlyOutput("donut_chart", width = "500px", height = "500px")
-                           , plotly::plotlyOutput("cluster_emp_plot_2", width = "1000px", height = "600px")
-                           # , verbatimTextOutput("selection")
-                           , plotly::plotlyOutput("cluster_wages", width = "1000px", height = "600px")
-                           , plotly::plotlyOutput("cluster_job_creation", width = "1000px", height = "1000px")
-                           , DT::dataTableOutput("top_clusters")
-                  ),
-                  tabPanel("Tables",
-                           shiny::dataTableOutput("related_clusters"),
-                           shiny::dataTableOutput("sub_clusters"),
-                           shiny::dataTableOutput("industries")
-                           # , forceNetworkOutput("forceNetwork_Viz")
-                  ) 
-                  # , tabPanel("test"
-                  #            , visNetworkOutput("vizNetwork_advanced", height = "800px", width = "1000px")
-                  #            , dataTableOutput("test2")
-                  #            ,   verbatimTextOutput("edges_data_from_shiny_text")
-                  #          )
-                ))
-  )
-))
+navbarPage("EconClust", id="nav",
+
+  tabPanel("Storm Map",
+    div(class="outer",
+
+      tags$head(
+        # Include our custom CSS
+        includeCSS("styles.css"),
+        includeScript("gomap.js")
+      ),
+
+      # If not using custom CSS, set height of leafletOutput to a number instead of percent
+      leafletOutput("map", width="100%", height="100%"),
+
+      absolutePanel(id = "controls"
+                    , class = "panel panel-default"
+                    , fixed = TRUE
+                    , draggable = TRUE
+                    , top = 60
+                    , left = "auto"
+                    , right = 80
+                    , bottom = "auto"
+                    , width = 390
+                    , height = "auto"
+
+        , h2("EconClust")
+        # , selectInput(inputId = "region_name"
+        #             , label = "Select a Region"
+        #             , choices = region_names)
+        , selectInput("storm_name", "Storm", c("Hurriane Irma"))
+        , selectInput("advisory_number", "Advisory", irma_gis_advisories_avlbl)
+        , selectInput(inputId = "year"
+                    , label = "Select a Year"
+                    , choices = meta_data$years_avlbl
+                    , selected = max(meta_data$years_avlbl))
+      ),
+
+      tags$div(id="cite"
+        # , 'Data compiled for '
+        # , tags$em('Coming Apart: The State of White America, 1960–2010')
+        # , ' by Charles Murray (Crown Forum, 2012).'
+      )
+    )
+  ),
+
+  tabPanel("Related Clusters"
+           , h1(textOutput("region_cluster_header"))
+           , br()
+           , br()
+           , br()
+           , plotly::plotlyOutput("strong_clusters_plot", height = "auto")
+           , br()
+           , br()
+           , br()
+           , br()
+           , visNetworkOutput("vizNetwork_advanced", height = "900px", width = "1000px")
+           , br()
+           , br()
+           , br()
+           , br()
+           , plotly::plotlyOutput("donut_chart")
+           , plotly::plotlyOutput("cluster_emp_plot")
+  ),
+  tabPanel("Region Figures"
+           # , plotly::plotlyOutput("donut_chart", width = "500px", height = "500px")
+           , plotly::plotlyOutput("cluster_emp_plot_2", width = "1000px", height = "600px")
+           # , verbatimTextOutput("selection")
+           , plotly::plotlyOutput("cluster_wages", width = "1000px", height = "600px")
+           , plotly::plotlyOutput("cluster_job_creation", width = "1000px", height = "1000px")
+           , DT::dataTableOutput("top_clusters")
+  ),
+  tabPanel("Tables",
+           shiny::dataTableOutput("related_clusters"),
+           shiny::dataTableOutput("sub_clusters"),
+           shiny::dataTableOutput("industries")
+           # , forceNetworkOutput("forceNetwork_Viz")
+  ),
+  tabPanel("EconClust Explorer",
+    fluidRow(
+      column(3,
+        selectInput("states", "States", c("All states"="", structure(state.abb, names=state.name), "Washington, DC"="DC"), multiple=TRUE)
+      ),
+      column(3,
+        conditionalPanel("input.states",
+          selectInput("cities", "Cities", c("All cities"=""), multiple=TRUE)
+        )
+      ),
+      column(3,
+        conditionalPanel("input.states",
+          selectInput("zipcodes", "Zipcodes", c("All zipcodes"=""), multiple=TRUE)
+        )
+      )
+    ),
+    fluidRow(
+      column(1,
+        numericInput("minScore", "Min score", min=0, max=100, value=0)
+      ),
+      column(1,
+        numericInput("maxScore", "Max score", min=0, max=100, value=100)
+      )
+    ),
+    hr(),
+    DT::dataTableOutput("ziptable")
+  ),
+
+  conditionalPanel("false", icon("crosshair"))
+)
