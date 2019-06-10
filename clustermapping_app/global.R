@@ -1682,7 +1682,7 @@ get_affected_areas <- function(storm_polygon_sf = NULL
   #-------------------------------------- Get the counties affected -------------------------------------#
   #------------------------------------------------------------------------------------------------------#
   
-  # first we'll work on the counties object
+  # next we'll work on the counties object
   if(!is.null(counties_sf_obj)){
     if(st_crs(storm_polygon_sf) != st_crs(counties_sf_obj)){
       # make sure the storm_polyhons_sf advisory has the same crs as the counties sf object
@@ -1690,7 +1690,7 @@ get_affected_areas <- function(storm_polygon_sf = NULL
       st_crs(storm_polygon_sf) <- st_crs(counties_sf_obj)
     }
     
-    # now to reduce the computation time, we subset the counties object to only include counties in 
+    # now to reduce the computation time, we subset the counties object to only include counties
     # in the affected states
     if(!is.null(states_affected)){
       counties_sf_sub <- counties_sf_obj %>% filter(STATEFP %in% states_affected$STATEFP)
@@ -1708,12 +1708,20 @@ get_affected_areas <- function(storm_polygon_sf = NULL
   #------------------------------------------ Get msas affected -----------------------------------------#
   #------------------------------------------------------------------------------------------------------#
   
-  # first we'll work on the counties object
+  # now we'll work on the msas
   if(!is.null(msa_sf_obj)){
     if(st_crs(storm_polygon_sf) != st_crs(msa_sf_obj)){
       # make sure the storm_polyhons_sf advisory has the same crs as the msa sf object
       if(verbose) invisible(cat("\tchanging the crs of the storms_polygons_sf object to match that of the msa_sf_obj object\n"))
       st_crs(storm_polygon_sf) <- st_crs(msa_sf_obj)
+    }
+
+    # now to reduce the computation time, we subset the msas object to only include msas
+    # in the affected states
+    if(!is.null(states_affected)){
+      msa_sf_sub <- msa_sf_obj %>% filter_at(vars(starts_with("state_codes")), any_vars(. %in% states_affected_out$STATEFP))
+    }else{
+      msa_sf_sub <- msa_sf_obj
     }
     
     if(verbose) invisible(cat("\tGetting affected msas...\n"))
@@ -1726,7 +1734,7 @@ get_affected_areas <- function(storm_polygon_sf = NULL
   #--------------------------------- Get economic areas affected ----------------------------------------#
   #------------------------------------------------------------------------------------------------------#
   
-  # first we'll work on the counties object
+  # now we'll work on the economic areas object
   if(!is.null(economic_areas_sf_obj)){
     if(st_crs(storm_polygon_sf) != st_crs(economic_areas_sf_obj)){
       # make sure the storm_polyhons_sf advisory has the same crs as the economic_areas sf object
@@ -1761,4 +1769,48 @@ get_affected_areas <- function(storm_polygon_sf = NULL
 }
 #========================================================================================#
 #================================ End: get_affected_areas ===============================#
+#========================================================================================#
+
+#========================================================================================#
+#================================== parse_affected_areas ================================#
+#========================================================================================#
+parse_affected_areas <- function(affected_areas_obj = NULL
+                                 , within_ = TRUE){
+  # this function will parse the affected_areas list produced with the get_affected_areas 
+  # function
+  
+  # vars:
+  # affected_areas_obj: affected_areas list produced with the get_affected_areas
+  # within_: use the less conservative "within" option compared to the "affected" option
+  
+  if(within_) tmp <- "_within"
+  else tmp <- "_affected"
+  
+  # we'll start by parsing the affected economic areas
+  affected_econ <- affected_areas_obj[[paste0("economic_areas", tmp)]]
+  
+  # drop the sf geometry
+  st_geometry(affected_econ) <- NULL
+  
+  # get the unique economic areas
+  unique_econ_areas <- affected_econ %>% select(economic_area_code, economic_area) %>% dplyr::distinct_all()
+  
+  # next we'll parse the affected msas
+  affected_msa <- affected_areas_obj[[paste0("msa", tmp)]]
+  
+  # drop the sf geometry
+  st_geometry(affected_msa) <- NULL
+  
+  # get the unique msas
+  unique_msa <- affected_msa %>% select(CBSAFP, region_short_name_t) %>% dplyr::distinct_all()
+  
+  returned_list <- list(affected_econ = affected_econ
+                        , unique_econ_areas = unique_econ_areas
+                        , affected_msa = affected_msa
+                        , unique_msa = unique_msa)
+  
+  return(returned_list)
+}
+#========================================================================================#
+#=============================== End: parse_affected_areas ==============================#
 #========================================================================================#
