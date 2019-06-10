@@ -1719,7 +1719,7 @@ get_affected_areas <- function(storm_polygon_sf = NULL
     # now to reduce the computation time, we subset the msas object to only include msas
     # in the affected states
     if(!is.null(states_affected)){
-      msa_sf_sub <- msa_sf_obj %>% filter_at(vars(starts_with("state_codes")), any_vars(. %in% states_affected_out$STATEFP))
+      msa_sf_sub <- msa_sf_obj %>% filter_at(vars(starts_with("state_codes")), any_vars(. %in% states_affected$STATEFP))
     }else{
       msa_sf_sub <- msa_sf_obj
     }
