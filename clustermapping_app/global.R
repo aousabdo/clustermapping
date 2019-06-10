@@ -1636,7 +1636,7 @@ get_affected_areas <- function(storm_polygon_sf = NULL
   # msa_sf_obj: This object contains the us msa regions with data from the clustermapping project
   # economic_areas_sf_obj: This object contains the us economic areas with data from the clustermapping project
   
-  # make sure the storm_polyhon_sf object is an sf object
+  # make sure the storm_polygon_sf object is an sf object
   if(class(storm_polygon_sf) != "sf"){
     invisible(cat("\tstorm_polygons_sf object has to be a spatial object, checking if I can 
                   convert it into one...\n"))
@@ -1672,6 +1672,7 @@ get_affected_areas <- function(storm_polygon_sf = NULL
       st_crs(storm_polygon_sf) <- st_crs(states_sf_obj)
     }
     
+    if(verbose) invisible(cat("\tGetting affected states...\n"))
     states_affected_list <- subset_sf_obj(sf_obj_1 = states_sf_obj, sf_obj_2 = storm_polygon_sf)
     states_affected <- states_affected_list[[1]]
     states_within   <- states_affected_list[[2]]
@@ -1696,7 +1697,8 @@ get_affected_areas <- function(storm_polygon_sf = NULL
     }else{
       counties_sf_sub <- counties_sf_obj
     }
-    
+
+    if(verbose) invisible(cat("\tGetting affected counties...\n"))    
     counties_affected_list <- subset_sf_obj(sf_obj_1 = counties_sf_sub, sf_obj_2 = storm_polygon_sf)
     counties_affected <- counties_affected_list[[1]]
     counties_within   <- counties_affected_list[[2]]
@@ -1714,6 +1716,7 @@ get_affected_areas <- function(storm_polygon_sf = NULL
       st_crs(storm_polygon_sf) <- st_crs(msa_sf_obj)
     }
     
+    if(verbose) invisible(cat("\tGetting affected msas...\n"))
     msa_affected_list <- subset_sf_obj(sf_obj_1 = msa_sf_obj, sf_obj_2 = storm_polygon_sf)
     msa_affected <- msa_affected_list[[1]]
     msa_within   <- msa_affected_list[[2]]
@@ -1739,6 +1742,7 @@ get_affected_areas <- function(storm_polygon_sf = NULL
       economic_areas_sf_sub <- economic_areas_sf_obj
     }
     
+    if(verbose) invisible(cat("\tGetting affected econmoic areas...\n"))
     economic_areas_affected_list <- subset_sf_obj(sf_obj_1 = economic_areas_sf_sub, sf_obj_2 = storm_polygon_sf)
     economic_areas_affected <- economic_areas_affected_list[[1]]
     economic_areas_within   <- economic_areas_affected_list[[2]]

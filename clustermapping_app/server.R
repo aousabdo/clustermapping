@@ -24,7 +24,6 @@ function(input, output, session) {
     # get information about the advisory
     storm <- irma_gis_advisories_data_all[[input$advisory_number]]
     
-    
     # get the polygons for the advisory
     storm_polygon_name <- names(storm)[str_detect(names(storm), "pgn")]
     
@@ -35,9 +34,9 @@ function(input, output, session) {
     # storms info and a list of affected areas
     affected <- get_affected_areas(storm_polygon_sf = irma_pgn_sf
                                    , counties_sf_obj = counties_sf
-                                   # , states_sf_obj = states_sf
-                                   # , msa_sf_obj = msa_sf
-                                   # , economic_areas_sf_obj = economic_areas_sf
+                                   , states_sf_obj = states_sf
+                                   , msa_sf_obj = msa_sf
+                                   , economic_areas_sf_obj = economic_areas_sf
                                    , verbose = TRUE)
     
     return(list(storm = storm, affected = affected))
@@ -157,6 +156,7 @@ function(input, output, session) {
     
     region_name_reactive <- affected$counties_affected$region_short_name_t
     region_name_reactive <- region_name_reactive[1]
+    
     if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
     region_type          <- regions_dt[region_short_name_t == region_name_reactive, region_type_t]
     
