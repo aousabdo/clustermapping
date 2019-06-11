@@ -1793,7 +1793,8 @@ parse_affected_areas <- function(affected_areas_obj = NULL
   st_geometry(affected_econ) <- NULL
   
   # get the unique economic areas
-  unique_econ_areas <- affected_econ %>% select(economic_area_code, economic_area) %>% dplyr::distinct_all()
+  unique_econ_areas <- affected_econ %>% select(economic_area_code, economic_area) %>% 
+    dplyr::distinct_all()
   
   # next we'll parse the affected msas
   affected_msa <- affected_areas_obj[[paste0("msa", tmp)]]
@@ -1802,12 +1803,26 @@ parse_affected_areas <- function(affected_areas_obj = NULL
   st_geometry(affected_msa) <- NULL
   
   # get the unique msas
-  unique_msa <- affected_msa %>% select(CBSAFP, region_short_name_t) %>% dplyr::distinct_all()
+  unique_msa <- affected_msa %>% select(CBSAFP, region_short_name_t) %>% 
+    dplyr::distinct_all()
+  
+  # next we'll parse the affected counties
+  affected_counties <- affected_areas_obj[[paste0("counties", tmp)]]
+  
+  # drop the sf geometry
+  st_geometry(affected_counties) <- NULL
+  
+  # get the unique counties
+  unique_counties <- affected_counties %>% 
+    select(STATEFP, COUNTYFP, region_code_t, region_short_name_t, NAME, key_t)  %>% 
+    dplyr::distinct_all()
   
   returned_list <- list(affected_econ = affected_econ
                         , unique_econ_areas = unique_econ_areas
                         , affected_msa = affected_msa
-                        , unique_msa = unique_msa)
+                        , unique_msa = unique_msa
+                        , affected_counties = affected_counties
+                        , unique_counties = unique_counties)
   
   return(returned_list)
 }

@@ -56,7 +56,7 @@ function(input, output, session) {
     m <- build_storm_map(gis_adv_obj = storm
                          , counties_affected = affected$counties_affected
                          , counties_within = affected$counties_within
-                         , center_on_storm = F)
+                         , center_on_storm = T)
     # if(input$center_on_storm) m <- m %>% clearBounds %>% setView(lng = -93.85, lat = 37.45, zoom = 4)
     return(m)
   })
@@ -75,10 +75,12 @@ function(input, output, session) {
   #-----------------------------------------------------------------------------------#
   
   strong_clusters_fun <- reactive({
-    region_name_reactive <- storm_data()$affected$counties_affected$region_short_name_t
+    # region_name_reactive <- storm_data()$affected$counties_affected$region_short_name_t
+    # 
+    # # just select the first region for now
+    # region_name_reactive <- region_name_reactive[1]
     
-    # just select the first region for now
-    region_name_reactive <- region_name_reactive[1]
+    region_name_reactive <- input$affected_counties_dynamic
 
     # if the storm hasn't made land fall, there won't be any affected areas and the region_name_reactive
     # will be an NA. If so, we need to handle this "error"
@@ -154,8 +156,10 @@ function(input, output, session) {
     # get region type
     affected <<- storm_data()$affected 
     
-    region_name_reactive <- affected$counties_affected$region_short_name_t
-    region_name_reactive <- region_name_reactive[1]
+    # region_name_reactive <- affected$counties_affected$region_short_name_t
+    # region_name_reactive <- region_name_reactive[1]
+    
+    region_name_reactive <- input$affected_counties_dynamic
     
     if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
     region_type          <- regions_dt[region_short_name_t == region_name_reactive, region_type_t]
@@ -257,8 +261,10 @@ function(input, output, session) {
     # It is better to use the short names since it will help us with the real-estate on the plots
     strong_clusters[, cluster_name_2 := paste0(cluster_short_name, ", Rank: ", cluster_pos)]
     
-    region_name_reactive <- storm_data()$affected$counties_affected$region_short_name_t
-    region_name_reactive <- region_name_reactive[1]
+    # region_name_reactive <- storm_data()$affected$counties_affected$region_short_name_t
+    # region_name_reactive <- region_name_reactive[1]
+    
+    region_name_reactive <- input$affected_counties_dynamic
     
     if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
     
@@ -319,11 +325,13 @@ function(input, output, session) {
     if(!is.null(strong_clusters)){
       is_strong_cluster <- strong_clusters_fun()[["is_strong_cluster"]]
       
-      region_name_reactive <- storm_data()$affected$counties_affected$region_short_name_t
-      region_name_reactive <- region_name_reactive[1]
+      # region_name_reactive <- storm_data()$affected$counties_affected$region_short_name_t
+      # region_name_reactive <- region_name_reactive[1]
+      
+      region_name_reactive <- input$affected_counties_dynamic
       
       if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
-      
+        
       # return appropriate text
       if(is_strong_cluster) {
         paste0("Strong Clusters in ", region_name_reactive, ", ", input$year)
@@ -375,8 +383,10 @@ function(input, output, session) {
     # get the selected cluster by the user
     selected_cluster <- cluster_data_fun()$related_clusters_dt$parent_cluster_code %>% unique()
     
-    region_name_reactive <- storm_data()$affected$counties_affected$region_short_name_t
-    region_name_reactive <- region_name_reactive[1]
+    # region_name_reactive <- storm_data()$affected$counties_affected$region_short_name_t
+    # region_name_reactive <- region_name_reactive[1]
+    
+    region_name_reactive <- input$affected_counties_dynamic
     
     if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
     
@@ -432,6 +442,30 @@ function(input, output, session) {
                          , cluster_emp()
                          , widths = c(0.5, 0.4)
     )
+  })
+  
+  output$affected_economic_areas <- renderUI({
+    # get storm data
+    affected <- storm_data()$affected # affected areas list
+    mydata <- parse_affected_areas(affected_areas_obj = affected)$unique_econ_areas$economic_area
+    
+    selectInput("affected_economic_areas_dynamic", "Affected Economic Areas", mydata)
+  })
+  
+  output$affected_msas <- renderUI({
+    # get storm data
+    affected <- storm_data()$affected # affected areas list
+    mydata <- parse_affected_areas(affected_areas_obj = affected)$unique_msa$region_short_name_t
+    
+    selectInput("affected_msas_dynamic", "Affected Micropolitan Statistical Areas", mydata)
+  })
+  
+  output$affected_counties <- renderUI({
+    # get storm data
+    affected <- storm_data()$affected # affected areas list
+    mydata <- parse_affected_areas(affected_areas_obj = affected)$unique_counties$region_short_name_t
+    
+    selectInput("affected_counties_dynamic", "Affected Counties", mydata)
   })
   
   #=========================================================================#

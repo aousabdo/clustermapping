@@ -54,7 +54,8 @@ navbarPage("EconClust", id="nav",
     )
   ),
 
-  tabPanel("Related Clusters"
+  tabPanel("Affected Counties"
+           , uiOutput('affected_counties')
            , h1(textOutput("region_cluster_header"))
            , br()
            , br()
@@ -71,6 +72,12 @@ navbarPage("EconClust", id="nav",
            , br()
            , plotly::plotlyOutput("donut_chart")
            , plotly::plotlyOutput("cluster_emp_plot")
+  ),
+  tabPanel("Affected Economic Areas"
+           , uiOutput('affected_economic_areas')
+  ),
+  tabPanel("Affected Micropolitan Statistical Areas"
+           , uiOutput('affected_msas')
   ),
   tabPanel("Region Figures"
            # , plotly::plotlyOutput("donut_chart", width = "500px", height = "500px")
