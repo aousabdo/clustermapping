@@ -50,13 +50,13 @@ function(input, output, session) {
     
     # get storm data
     tmp <- storm_data()
-    storm    <- tmp$storm # storm data
+    storm    <<- tmp$storm # storm data
     affected <<- tmp$affected # affected areas list
     
     m <- build_storm_map(gis_adv_obj = storm
                          , counties_affected = affected$counties_affected
                          , counties_within = affected$counties_within
-                         , center_on_storm = T)
+                         , center_on_storm = input$center_on_storm)
     # if(input$center_on_storm) m <- m %>% clearBounds %>% setView(lng = -93.85, lat = 37.45, zoom = 4)
     return(m)
   })
