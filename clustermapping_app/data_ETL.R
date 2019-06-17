@@ -251,7 +251,7 @@ saveRDS(object = meta_data, file = "./data/meta_data.Rds")
 # etc. 
 
 # this is Dr. Aous Abdo's census API key. Please use it wisely
-census_api_key(key = "00480fb480b6c6a5ebd4cfcb7afa6da946be92e8", install = TRUE)
+#census_api_key(key = "00480fb480b6c6a5ebd4cfcb7afa6da946be92e8", install = TRUE)
 readRenviron("~/.Renviron")
 
 # Set the tigris_use_cache option. We want to cache the data so we don't end up downloading it
@@ -271,8 +271,8 @@ county_data <- tidycensus::get_acs(geography = "county"
                                   , shift_geo = TRUE)
 
 # change state names to state abbreviations 
-county_pop <- county_pop %>%
-  mutate(NAME = qdap::mgsub(state.name, state.abb, county_pop$NAME))
+county_pop <- county_data %>%
+  mutate(NAME = qdap::mgsub(state.name, state.abb, county_data$NAME))
 
 # now download the us states data
 us_states <- tigris::states(cb = TRUE)
@@ -307,16 +307,20 @@ us_cb <- core_based_statistical_areas(cb = TRUE)
 
 # join state data
 states_sf <- dplyr::left_join(us_states, regions_dt, by = c("STATEFP" = "region_code_t"))
+states_sf <- states_sf %>% filter(!is.na(region_short_name_t))
 
 #join county data
 counties_sf <- dplyr::left_join(us_counties, regions_dt, by = "region_code_t")
+counties_sf <- counties_sf %>% filter(!is.na(region_short_name_t))
 
 # join the msa area data
 msa_sf <- dplyr::left_join(us_cb, regions_dt, by = c("CBSAFP" = "region_code_t"))
+msa_sf <- msa_sf %>% filter(!is.na(region_short_name_t))
 
 # join the economic areas
 # first we'll join economic areas table with the regions_dt table
 economic_areas <- left_join(economic_areas, regions_dt, by = c("FIPS" = "region_code_t"))
+economic_areas <- economic_areas %>% filter(!is.na(economic_area))
 
 # now join with the county data
 economic_areas_sf <- dplyr::left_join(us_counties, economic_areas, by = c("region_code_t" = "FIPS"))
