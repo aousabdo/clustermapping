@@ -75,6 +75,7 @@ regions_dt <- regions_dt[region_type_t != "custom"]
 
 # some data transformations
 regions_dt[, region_type_t := factor(region_type_t)]
+
 # don't do the below transformations since these are actually character values which will be misses up 
 # if we converth them into integers
 # regions_dt[, region_state_code_t := as.integer(region_state_code_t)]
@@ -138,6 +139,8 @@ f_dowle3 = function(DT) {
 # apply function to our regions_dt data.table
 f_dowle3(DT = regions_dt)
 
+regions_dt[, name_t := gsub("--", "-", name_t)]
+
 # put the reginos data in one list and save it
 regions_data <- list(regions_lst = regions_lst, regions_dt = regions_dt)
 
@@ -190,6 +193,59 @@ cluster_data <- list(clusters_list = clusters_list, clusters_avlbl = clusters_av
 # save data to RDS file
 invisible(cat("\tSaving cluster data...\n"))
 saveRDS(object = cluster_data, file = "./data/cluster_data.Rds")
+
+# below we will downlad all of the clusters data from Harvard
+# download all of the data
+download_all_clusters_data <- FALSE
+
+if(download_all_clusters_data){
+  # start with counties
+  counties_list <- list()
+  
+  # loop over all counties in the US and download all of the clusters data for all counties
+  for(i in counties_sf$region_short_name_t){
+    invisible(cat("\n\tgetting all clusters for county: ", i, "\n"))
+    counties_list[[i]] <- get_region_clusters(cluster = "all"
+                                              , region_name = i
+                                              , regions_dt = regions_dt
+                                              , region_type = "county"
+                                              , verbose = TRUE)
+  }
+  
+  # merge the data in one table, make sure to fill missing columns
+  counties_all <- do.call(rbind, c(counties_list, fill = TRUE))
+  
+  # save the data
+  saveRDS(counties_all, "./data/all_counties_clusters.rds")
+  
+  # now we do the same for the msas
+  msa_list <- list()
+  for(i in msa_sf$region_short_name_t){
+    invisible(cat("\n\tgetting all clusters for msa: ", i, "\n"))
+    msa_list[[i]] <- get_region_clusters(cluster = "all"
+                                         , region_name = i
+                                         , regions_dt = regions_dt
+                                         , region_type = "msa"
+                                         , verbose = TRUE)
+  }
+  
+  msa_all <- do.call(rbind, c(msa_list, fill = TRUE))
+  saveRDS(msa_all, "./data/all_msa_clusters.rds")
+  
+  # and now we do the same for the economic areas
+  economic_areas_list <- list()
+  for(i in economic_areas_sf$economic_area){
+    invisible(cat("\n\tgetting all clusters for economic area: ", i, "\n"))
+    economic_areas_list[[i]] <- get_region_clusters(cluster = "all"
+                                                    , region_name = i
+                                                    , regions_dt = regions_dt
+                                                    , region_type = "economic"
+                                                    , verbose = TRUE)
+  }
+  
+  economic_areas_all <- do.call(rbind, c(economic_areas_list, fill = TRUE))
+  saveRDS(economic_areas_all, "./data/all_economic_area_clusters.rds")
+}
 #============================================================================================#
 #================================== End: Clusters Data ======================================#
 #============================================================================================#
@@ -264,11 +320,11 @@ options(tigris_class = "sf")
 
 # download county population along with the geometry/shape files for the counties
 county_data <- tidycensus::get_acs(geography = "county"
-                                  , variables = c(population = "B01003_001"
-                                                  , hhincome = "B19013_001")
-                                  , geometry = TRUE
-                                  , keep_geo_vars = TRUE
-                                  , shift_geo = TRUE)
+                                   , variables = c(population = "B01003_001"
+                                                   , hhincome = "B19013_001")
+                                   , geometry = TRUE
+                                   , keep_geo_vars = TRUE
+                                   , shift_geo = TRUE)
 
 # change state names to state abbreviations 
 county_pop <- county_data %>%
@@ -324,6 +380,9 @@ economic_areas <- economic_areas %>% filter(!is.na(economic_area))
 
 # now join with the county data
 economic_areas_sf <- dplyr::left_join(us_counties, economic_areas, by = c("region_code_t" = "FIPS"))
+economic_areas_sf <- economic_areas_sf %>% 
+  filter(economic_area %like% "--") %>% 
+  mutate(economic_area = gsub("--", "-", economic_area))
 #--------------------------------------------------------------------------------------------#
 #------------------------------------- End: Join the data -----------------------------------#
 #--------------------------------------------------------------------------------------------#
