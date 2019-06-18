@@ -503,14 +503,21 @@ get_region_clusters <- function(cluster = NULL
     if(is.null(regions_dt)) stop("\tPlease supply a region_dt data.table...\n")
     if(!is.data.table(regions_dt)) stop("\tregions_dt must be a data.table object...\n")
     
-    # make sure the regions_name is valid
-    if(regions_dt[region_short_name_t == region_name, .N] == 0) stop("\tRegion selected is not valid...\n")
+    # # make sure the region_type is valid
+    # if(!is.null(region_type)){
+    #   if(!(region_type %in% meta_data_list[["region_types_avlbl"]][, variable])) stop("\tRegion type selected is not vaild...\n")
+    # }else{region_type <- regions_dt[region_short_name_t == region_name, region_type_t]}
     
     # make sure the region_type is valid
     if(!is.null(region_type)){
       if(!(region_type %in% meta_data_list[["region_types_avlbl"]][, variable])) stop("\tRegion type selected is not vaild...\n")
-    }else{region_type <- regions_dt[region_short_name_t == region_name, region_type_t]}
+    }else{stop("\tPlease specify region_type")}
+    
+    # make sure the region_name is valid
+    if(regions_dt[(region_short_name_t == region_name | name_t == region_name) & region_type_t == region_type, .N] == 0)
+      stop("\tRegion selected is not valid...\n")
   }
+  
   # now check the year selected
   if(is.numeric(year_selected)){
     if(sum(year_selected %in% meta_data_list$years_avlbl) != length(year_selected))
@@ -535,7 +542,7 @@ get_region_clusters <- function(cluster = NULL
                                   , region_short_name_t = region_name)
   }else{
     # filter the regions data.table for the selected region
-    selected_region <- regions_dt[region_short_name_t == region_name
+    selected_region <- regions_dt[(region_short_name_t == region_name | name_t == region_name) & region_type_t == region_type
                                   , .(region_type_t, region_code_t, name_t, region_short_name_t)]
     
     # in some cases, the region_code is betewen 1 and 9, in this case
@@ -702,6 +709,40 @@ build_cluster_plots <- function(region_clusters_dt = NULL
 }
 #========================================================================================#
 #============================= End: build_cluster_plots =================================#
+#========================================================================================#
+
+#========================================================================================#
+#============================== get_top_traded_clusters =================================#
+#========================================================================================#
+get_top_traded_clusters <- function(region_clusters_dt = NULL
+                                , N_top_clusters = 10
+                                , year_selected = 2016
+                                , traded_only = TRUE
+                                , start_year = 1998
+                                , end_year   = 2016
+                                , meta_data_list = meta_data
+                                , use_short_names = TRUE){
+  
+  # chech the years given
+  if(!(year_selected %in% meta_data_list[["years_avlbl"]])) stop("\tYear selected is out of range...\n")
+  if(!(start_year%in% meta_data_list[["years_avlbl"]])) stop("\tstart year is out of range...\n")
+  if(!(end_year %in% meta_data_list[["years_avlbl"]])) stop("\tend year is out of range...\n")
+  if(start_year >= end_year) stop("\tStart year must be less than end year...\n")
+  
+  # make a copy of the data.table
+  region_cluster <- copy(region_clusters_dt)
+  
+  # get rid of clusters with no employment
+  region_cluster <- region_cluster[emp_tl > 0]
+  
+  # set proper orders
+  setorder(region_cluster,  -year_t, -emp_tl)
+  
+  return(region_cluster)
+  
+}
+#========================================================================================#
+#============================ End: get_top_traded_clusters ==============================#
 #========================================================================================#
 
 #========================================================================================#
