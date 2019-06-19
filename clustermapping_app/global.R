@@ -56,6 +56,11 @@ meta_data     <- readRDS("./data/meta_data.Rds")
 regions_data  <- readRDS("./data/regions_data.Rds")
 clusters_data <- readRDS("./data/cluster_data.Rds")
 
+# load clusters data for all counties, msas, and econ areas
+all_counties_clusters_dt      <- fread("./data/all_counties_clusters.csv")
+all_msa_clusters_dt           <- fread("./data/all_msa_clusters.csv")
+all_economic_area_clusters_dt <- fread("./data/all_economic_area_clusters.csv") 
+
 regions_dt <- regions_data$regions_dt
 
 # get a list of regoins available, exclude the three countries, the us, mexico and canada

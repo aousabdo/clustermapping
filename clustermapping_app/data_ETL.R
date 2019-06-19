@@ -217,6 +217,7 @@ if(download_all_clusters_data){
   
   # save the data
   saveRDS(counties_all, "./data/all_counties_clusters.rds")
+  write.csv(counties_all, "./data/all_counties_clusters.csv", row.names = FALSE)
   
   # now we do the same for the msas
   msa_list <- list()
@@ -231,7 +232,8 @@ if(download_all_clusters_data){
   
   msa_all <- do.call(rbind, c(msa_list, fill = TRUE))
   saveRDS(msa_all, "./data/all_msa_clusters.rds")
-  
+  write.csv(msa_all, "./data/all_msa_clusters.csv", row.names = FALSE)
+    
   # and now we do the same for the economic areas
   economic_areas_list <- list()
   for(i in economic_areas_sf$economic_area){
@@ -245,6 +247,7 @@ if(download_all_clusters_data){
   
   economic_areas_all <- do.call(rbind, c(economic_areas_list, fill = TRUE))
   saveRDS(economic_areas_all, "./data/all_economic_area_clusters.rds")
+  write.csv(economic_areas_all, "./data/all_economic_area_clusters.csv", row.names = FALSE)
 }
 #============================================================================================#
 #================================== End: Clusters Data ======================================#
