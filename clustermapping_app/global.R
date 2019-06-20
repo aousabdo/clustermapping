@@ -57,9 +57,12 @@ regions_data  <- readRDS("./data/regions_data.Rds")
 clusters_data <- readRDS("./data/cluster_data.Rds")
 
 # load clusters data for all counties, msas, and econ areas
-all_counties_clusters_dt      <- fread("./data/all_counties_clusters.csv")
-all_msa_clusters_dt           <- fread("./data/all_msa_clusters.csv")
-all_economic_area_clusters_dt <- fread("./data/all_economic_area_clusters.csv") 
+# all_counties_clusters_dt      <- fread("./data/all_counties_clusters.csv")
+# all_msa_clusters_dt           <- fread("./data/all_msa_clusters.csv")
+# all_economic_area_clusters_dt <- fread("./data/all_economic_area_clusters.csv") 
+# all_states_clusters_dt        <- fread("./data/all_states_clusters.csv")
+
+all_region_clusters <- fread("./data/all_region_clusters.csv")
 
 regions_dt <- regions_data$regions_dt
 
@@ -1822,7 +1825,7 @@ get_affected_areas <- function(storm_polygon_sf = NULL
 #========================================================================================#
 
 #========================================================================================#
-#================================== parse_affected_areas ================================#
+#================================ parse_affected_regions ================================#
 #========================================================================================#
 parse_affected_regions <- function(affected_areas_obj = NULL
                                  , within_ = TRUE){
@@ -1880,5 +1883,55 @@ parse_affected_regions <- function(affected_areas_obj = NULL
   return(returned_list)
 }
 #========================================================================================#
-#=============================== End: parse_affected_areas ==============================#
+#============================== End: parse_affected_regions =============================#
+#========================================================================================#
+
+#========================================================================================#
+#================================= get_critical_clusters ================================#
+#========================================================================================#
+get_critical_clusters <- function(parsed_affected_regions_list = NULL
+                                  , all_region_clusters_dt = NULL
+                                  , region_type = NULL
+                                  , filter_emp_tl = TRUE
+                                  , top_N = 10){
+  # function to get the top traded clusters by employment rank
+  
+  # vars:
+  # parsed_affected_regions_list: the output of the parse_affected_regions function
+  # all_region_clusters_dt: data.table containing the list of all clusters for all states, counties
+  # msas, and econ areas. This table is saved in the ./data/all_region_clusters.csv and ./data/all_region_clusters.rds
+  # files
+  
+  # make sure the user gave a proper region type
+  if(is.null(region_type)) stop("\tPlease provide a valid region type. Valid region types are: \n\t\tstate \n\t\tmsa \n\t\teconomic \n\t\tcounty\n")
+  
+  # we will only keep some columns from the data
+  cols_to_keep <- c("id", "cluster_name_t", "cluster_code_t", "key_t", "year_t", "region_code_t"
+                    , "region_name_t", "region_short_name_t",  "region_type_t","traded_b")
+  
+  # sub string to match the names in the parsed list 
+  match_region <- paste0("unique_", substr(region_type, 1, 3))
+  
+  # get the corresponding datatable from the parsed list
+  tmp <- parsed_affected_regions_list[[grep(match_region, names(parsed_affected_regions_list))]]
+  
+  # make a temporary copy of the all_region_clusters datatable
+  tmp2 <- copy(all_region_clusters_dt)
+
+  # many of the entries in the all_region_clusters datatable have zero empoloyment, let's filter those to save time
+  if(filter_emp_tl) tmp2 <- tmp2[emp_tl > 0]
+  
+  # now filter the all_region_clusters_dt table to only contain those affected regions from the parsed_affected_retions_list 
+  # object, again, we are only keeping some columns and not all of them
+  affected_regions <- tmp2[region_short_name_t %in% tmp$region_short_name_t & traded_b, ] %>%
+    select(c(cols_to_keep, starts_with("emp")))
+  
+  # set the proper ordering, sort by region name and then by employment rank
+  setorderv(affected_regions, c("region_short_name_t", "emp_tl_rank_i"))  
+  
+  # now that we have the datatable properly sorted, only keep the top_N 
+  affected_regions[, head(.SD, top_N), by = region_short_name_t]
+}
+#========================================================================================#
+#============================== End: get_critical_clusters ==============================#
 #========================================================================================#
