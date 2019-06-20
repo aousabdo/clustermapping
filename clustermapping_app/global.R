@@ -1606,7 +1606,7 @@ subset_sf_obj <- function(sf_obj_1 = NULL
   # this subest might end up giving partial regions of first object inside the 
   # second object
   # The second output is the subest of the first object inside the second object.
-  
+  foooooooo <<- copy(sf_obj_1)
   # First we need to make sure the two object are sf objects
   if(class(sf_obj_1) != "sf"){
     invisible(cat("\tsf_obj_1 object has to be a spatial object, checking if I can convert it into one...\n"))
@@ -1633,6 +1633,8 @@ subset_sf_obj <- function(sf_obj_1 = NULL
     st_crs(sf_obj_2) <- st_crs(sf_obj_1)
   }
   
+  sf_obj_1_out <<- sf_obj_1
+  sf_obj_2_out <<- sf_obj_2
   # subset the first sf object using the second sf object
   sf_obj_1_subset <- sf_obj_1[sf_obj_2, ]
   
@@ -1745,6 +1747,8 @@ get_affected_areas <- function(storm_polygon_sf = NULL
     }
 
     if(verbose) invisible(cat("\tGetting affected counties...\n"))    
+    counties_sf_sub_out <<- counties_sf_sub
+    counties_sf_obj_out <<- counties_sf_obj
     counties_affected_list <- subset_sf_obj(sf_obj_1 = counties_sf_sub, sf_obj_2 = storm_polygon_sf)
     counties_affected <- counties_affected_list[[1]]
     counties_within   <- counties_affected_list[[2]]
@@ -1820,7 +1824,7 @@ get_affected_areas <- function(storm_polygon_sf = NULL
 #========================================================================================#
 #================================== parse_affected_areas ================================#
 #========================================================================================#
-parse_affected_areas <- function(affected_areas_obj = NULL
+parse_affected_regions <- function(affected_areas_obj = NULL
                                  , within_ = TRUE){
   # this function will parse the affected_areas list produced with the get_affected_areas 
   # function
@@ -1837,31 +1841,34 @@ parse_affected_areas <- function(affected_areas_obj = NULL
   
   # drop the sf geometry
   st_geometry(affected_econ) <- NULL
+  affected_econ <- as.data.table(affected_econ)
   
   # get the unique economic areas
   unique_econ_areas <- affected_econ %>% select(economic_area_code, economic_area) %>% 
-    dplyr::distinct_all()
+    dplyr::distinct_all() %>% as.data.table()
   
   # next we'll parse the affected msas
   affected_msa <- affected_areas_obj[[paste0("msa", tmp)]]
   
   # drop the sf geometry
   st_geometry(affected_msa) <- NULL
+  affected_msa <- as.data.table(affected_msa)
   
   # get the unique msas
   unique_msa <- affected_msa %>% select(CBSAFP, region_short_name_t) %>% 
-    dplyr::distinct_all()
+    dplyr::distinct_all() %>% as.data.table()
   
   # next we'll parse the affected counties
   affected_counties <- affected_areas_obj[[paste0("counties", tmp)]]
   
   # drop the sf geometry
   st_geometry(affected_counties) <- NULL
+  affected_counties <- as.data.table(affected_counties)
   
   # get the unique counties
   unique_counties <- affected_counties %>% 
     select(STATEFP, COUNTYFP, region_code_t, region_short_name_t, NAME, key_t)  %>% 
-    dplyr::distinct_all()
+    dplyr::distinct_all() %>% as.data.table()
   
   returned_list <- list(affected_econ = affected_econ
                         , unique_econ_areas = unique_econ_areas
