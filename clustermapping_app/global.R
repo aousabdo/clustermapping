@@ -1904,6 +1904,7 @@ get_critical_clusters <- function(parsed_affected_regions_list = NULL
   
   # make sure the user gave a proper region type
   if(is.null(region_type)) stop("\tPlease provide a valid region type. Valid region types are: \n\t\tstate \n\t\tmsa \n\t\teconomic \n\t\tcounty\n")
+  if(!(region_type %in% c("county", "msa", "state", "economic"))) stop("\tregion_type provided is wrong. Valid region types are: \n\t\tstate \n\t\tmsa \n\t\teconomic \n\t\tcounty\n")
   
   # we will only keep some columns from the data
   cols_to_keep <- c("id", "cluster_name_t", "cluster_code_t", "key_t", "year_t", "region_code_t"
@@ -1913,18 +1914,24 @@ get_critical_clusters <- function(parsed_affected_regions_list = NULL
   match_region <- paste0("unique_", substr(region_type, 1, 3))
   
   # get the corresponding datatable from the parsed list
-  tmp <- parsed_affected_regions_list[[grep(match_region, names(parsed_affected_regions_list))]]
+  tmp <<- parsed_affected_regions_list[[grep(match_region, names(parsed_affected_regions_list))]]
   
   # make a temporary copy of the all_region_clusters datatable
-  tmp2 <- copy(all_region_clusters_dt)
+  tmp2 <<- copy(all_region_clusters_dt)
+  tmp2 <<- tmp2[region_type_t == region_type]
 
   # many of the entries in the all_region_clusters datatable have zero empoloyment, let's filter those to save time
   if(filter_emp_tl) tmp2 <- tmp2[emp_tl > 0]
   
   # now filter the all_region_clusters_dt table to only contain those affected regions from the parsed_affected_retions_list 
   # object, again, we are only keeping some columns and not all of them
-  affected_regions <- tmp2[region_short_name_t %in% tmp$region_short_name_t & traded_b, ] %>%
-    select(c(cols_to_keep, starts_with("emp")))
+  if(region_type == "economic"){
+    affected_regions <- tmp2[region_name_t %like% tmp$economic_area & traded_b, ] %>%
+      select(c(cols_to_keep, starts_with("emp")))    
+  }else{
+    affected_regions <- tmp2[region_short_name_t %in% tmp$region_short_name_t & traded_b, ] %>%
+      select(c(cols_to_keep, starts_with("emp")))
+  }
   
   # set the proper ordering, sort by region name and then by employment rank
   setorderv(affected_regions, c("region_short_name_t", "emp_tl_rank_i"))  
