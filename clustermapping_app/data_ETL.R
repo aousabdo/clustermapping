@@ -248,6 +248,30 @@ if(download_all_clusters_data){
   economic_areas_all <- do.call(rbind, c(economic_areas_list, fill = TRUE))
   saveRDS(economic_areas_all, "./data/all_economic_area_clusters.rds")
   write.csv(economic_areas_all, "./data/all_economic_area_clusters.csv", row.names = FALSE)
+  
+  # and now we do the same for the states
+  states_list <- list()
+  for(i in states_sf$region_short_name_t){
+    # exclude Puerto Rico since there is no cluster data for it
+    if(i != "Puerto Rico"){ 
+      invisible(cat("\n\tgetting all clusters for state: ", i, "\n"))
+      states_list[[i]] <- get_region_clusters(cluster = "all"
+                                              , region_name = i
+                                              , regions_dt = regions_dt
+                                              , region_type = "state"
+                                              , verbose = TRUE)
+    }
+  }
+  
+  states_all <- do.call(rbind, c(states_list, fill = TRUE))
+  saveRDS(states_all, "./data/all_states_clusters.rds")
+  write.csv(states_all, "./data/all_states_clusters.csv", row.names = FALSE)
+  
+  # now we will put all of the clusters data in one table
+  all_region_clusters <- do.call(rbind, c(list(counties_all, msa_all, economic_areas_all, states_all), fill = TRUE))
+  
+  saveRDS(all_region_clusters, "./data/all_region_clusters.rds")
+  write.csv(all_region_clusters, "./data/all_region_clusters.csv", row.names = FALSE)
 }
 #============================================================================================#
 #================================== End: Clusters Data ======================================#
