@@ -101,10 +101,10 @@ get_strong_clusters <- function(region_name = NULL
   # year_selected: a valid year in the form YYYY. Valid values can be found in the 
   # meta_data list which is produced by the data_ETL.R code
   
-  if(regions_dt[region_short_name_t == region_name, .N] == 0) stop("\tRegion selected is not valid...\n")
+  if(regions_dt[region_short_name_t == region_name | name_t == region_name, .N] == 0) stop("\tRegion selected is not valid...\n")
   
   # filter the regions data.table for the selected region
-  selected_region_info <- regions_dt[region_short_name_t == region_name
+  selected_region_info <- regions_dt[region_short_name_t == region_name | name_t == region_name
                                      , .(region_type_t, region_code_t, name_t, region_short_name_t)]
   
   # in some cases, the region_code is between 1 and 9, in this case
