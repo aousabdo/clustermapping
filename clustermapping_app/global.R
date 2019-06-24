@@ -273,10 +273,9 @@ get_cluster_data <- function(strong_clusters_dt = NULL
     related_clusters_dt[, parent_cluster_short_name := selected_cluster[, cluster_short_name]]
     
     # rearrange column orders to have the parent cluster as the first column
-    setcolorder(related_clusters_dt, c((ncol(related_clusters_dt_out)-2):ncol(related_clusters_dt_out)
+    setcolorder(related_clusters_dt, c((ncol(related_clusters_dt)-2):ncol(related_clusters_dt)
                                        , 2, 1, 3:(ncol(related_clusters_dt)-3)))
     
-    # related_clusters_dt_out <<- related_clusters_dt[, .(parent_cluster_name, cluster_name_t, related_percentage)]
   } else{
     if(verbose) invisible(cat("\tThe cluster", selected_cluster_name, "has no related clusters\n"))
     
@@ -1921,12 +1920,12 @@ get_critical_clusters <- function(parsed_affected_regions_list = NULL
   tmp2 <<- tmp2[region_type_t == region_type]
 
   # many of the entries in the all_region_clusters datatable have zero empoloyment, let's filter those to save time
-  if(filter_emp_tl) tmp2 <- tmp2[emp_tl > 0]
+  if(filter_emp_tl) tmp2 <<- tmp2[emp_tl > 0]
   
   # now filter the all_region_clusters_dt table to only contain those affected regions from the parsed_affected_retions_list 
   # object, again, we are only keeping some columns and not all of them
   if(region_type == "economic"){
-    affected_regions <- tmp2[region_name_t %like% tmp$economic_area & traded_b, ] %>%
+    affected_regions <- tmp2[region_name_t %in% tmp$economic_area & traded_b, ] %>%
       select(c(cols_to_keep, starts_with("emp")))    
   }else{
     affected_regions <- tmp2[region_short_name_t %in% tmp$region_short_name_t & traded_b, ] %>%
