@@ -85,7 +85,7 @@ function(input, output, session) {
     # if the storm hasn't made land fall, there won't be any affected areas and the region_name_reactive
     # will be an NA. If so, we need to handle this "error"
     
-    if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
+    if(is.na(region_name_reactive) | region_name_reactive == "" | is.null(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
     
     # this reactive function calls the function that gets the strong clusters for a given region and year
     strong_clusters <<- get_strong_clusters(region_name = region_name_reactive 
@@ -161,7 +161,7 @@ function(input, output, session) {
     
     region_name_reactive <- input$affected_counties_dynamic
     
-    if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
+    if(is.na(region_name_reactive) | region_name_reactive == "" | is.null(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
     region_type          <- regions_dt[region_short_name_t == region_name_reactive, region_type_t]
     
     # call the get_region_clusters function
@@ -212,6 +212,47 @@ function(input, output, session) {
   #-----------------------------------------------------------------------------------#
   
   #-----------------------------------------------------------------------------------#
+  #------------------------------ query_critical_clusters ----------------------------#
+  #-----------------------------------------------------------------------------------#
+  query_critical_clusters <- reactive({
+    # reactive function to query the critical economic clusters
+    parsed_affected_regions <- parse_affected_regions(affected_areas_obj = storm_data()$affected
+                                                      , within_ = TRUE)
+    
+    critical_clusters_by_county <- get_critical_clusters(parsed_affected_regions_list = parsed_affected_regions
+                                                         , all_region_clusters_dt = all_region_clusters
+                                                         , region_type = "county"
+                                                         , filter_emp_tl = TRUE
+                                                         , top_N = 10)
+    
+    critical_clusters_by_msa <- get_critical_clusters(parsed_affected_regions_list = parsed_affected_regions
+                                                         , all_region_clusters_dt = all_region_clusters
+                                                         , region_type = "msa"
+                                                         , filter_emp_tl = TRUE
+                                                         , top_N = 10)
+    
+    critical_clusters_by_economic_area <- get_critical_clusters(parsed_affected_regions_list = parsed_affected_regions
+                                                         , all_region_clusters_dt = all_region_clusters
+                                                         , region_type = "economic"
+                                                         , filter_emp_tl = TRUE
+                                                         , top_N = 10)
+    
+    critical_clusters <- rbind(critical_clusters_by_county
+                               , critical_clusters_by_msa
+                               , critical_clusters_by_economic_area)
+    
+    critical_clusters[emp_tl_rank_i < 3, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
+    
+    return(list(critical_clusters_by_county = critical_clusters_by_county
+                , critical_clusters_by_msa = critical_clusters_by_msa
+                , critical_clusters_by_economic_area = critical_clusters_by_economic_area
+                , critical_clusters = critical_clusters))
+  })
+  #-----------------------------------------------------------------------------------#
+  #---------------------------- End: query_critical_clusters -------------------------#
+  #-----------------------------------------------------------------------------------#
+  
+  #-----------------------------------------------------------------------------------#
   #---------------------------------- cluster_emp_fun --------------------------------#
   #-----------------------------------------------------------------------------------#
   
@@ -233,8 +274,6 @@ function(input, output, session) {
     
     # get cluster data
     cluster_data <- cluster_data_fun()
-    
-    cluster_data_out <<- copy(cluster_data)
     
     # don't return an error if there is no data in the related clusters table
     if(nrow(cluster_data$related_clusters_dt) == 0) return(NULL)
@@ -266,7 +305,7 @@ function(input, output, session) {
     
     region_name_reactive <- input$affected_counties_dynamic
     
-    if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
+    if(is.na(region_name_reactive) | region_name_reactive == "" | is.null(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
     
     # make a barplot of the strong clusters
     plot_ly(data = strong_clusters 
@@ -330,7 +369,7 @@ function(input, output, session) {
       
       region_name_reactive <- input$affected_counties_dynamic
       
-      if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
+      if(is.na(region_name_reactive) | region_name_reactive == "" | is.null(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
         
       # return appropriate text
       if(is_strong_cluster) {
@@ -350,6 +389,24 @@ function(input, output, session) {
   # top clusters table
   output$top_clusters <- DT::renderDataTable(cluster_plots_fun()$top_clusters)
   
+  # critical clusters table
+  output$critical_clusters <- DT::renderDataTable(query_critical_clusters()$critical_clusters)
+  
+  output$critical_clusters_text <- renderText({
+    tmp <<- query_critical_clusters()$critical_clusters
+    # tmp <- setorder(tmp, emp_tl_rank_i)
+    foo <- tmp[, head(.SD, 1), by = region_short_name_t][, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
+    print(foo)
+    # tmp <- tmp[emp_tl_rank_i < 3, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
+    paste0(foo[1, region_short_name_t]
+           , " has a critical economic cluster: "
+           , foo[1, cluster_name_t]
+           , " which is ranked "
+           , foo[1, emp_tl_rank_i]
+           , " in the US"
+           , " with "
+           , foo[1, emp_tl], " employment")
+  })
   # donut chart
   output$donut_chart <- plotly::renderPlotly(cluster_plots_fun()$donut_chart)
   
@@ -388,7 +445,7 @@ function(input, output, session) {
     
     region_name_reactive <- input$affected_counties_dynamic
     
-    if(is.na(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
+    if(is.na(region_name_reactive) | region_name_reactive == "" | is.null(region_name_reactive)) region_name_reactive <- "Fairfax County, VA"
     
     # build the network visulaization
     vis <- build_graph_vis(related_cluster_input = all_related_clusters
@@ -447,7 +504,7 @@ function(input, output, session) {
   output$affected_economic_areas <- renderUI({
     # get storm data
     affected <- storm_data()$affected # affected areas list
-    mydata <- parse_affected_areas(affected_areas_obj = affected)$unique_econ_areas$economic_area
+    mydata <- parse_affected_regions(affected_areas_obj = affected)$unique_econ_areas$economic_area
     
     selectInput("affected_economic_areas_dynamic", "Affected Economic Areas", mydata)
   })
@@ -455,7 +512,7 @@ function(input, output, session) {
   output$affected_msas <- renderUI({
     # get storm data
     affected <- storm_data()$affected # affected areas list
-    mydata <- parse_affected_areas(affected_areas_obj = affected)$unique_msa$region_short_name_t
+    mydata <- parse_affected_regions(affected_areas_obj = affected)$unique_msa$region_short_name_t
     
     selectInput("affected_msas_dynamic", "Affected Micropolitan Statistical Areas", mydata)
   })
@@ -463,7 +520,7 @@ function(input, output, session) {
   output$affected_counties <- renderUI({
     # get storm data
     affected <- storm_data()$affected # affected areas list
-    mydata <- parse_affected_areas(affected_areas_obj = affected)$unique_counties$region_short_name_t
+    mydata <- parse_affected_regions(affected_areas_obj = affected)$unique_counties$region_short_name_t
     
     selectInput("affected_counties_dynamic", "Affected Counties", mydata)
   })
