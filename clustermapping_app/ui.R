@@ -73,7 +73,7 @@ navbarPage("EconClust", id="nav",
            , br()
            , br()
            , plotly::plotlyOutput("donut_chart")
-           , plotly::plotlyOutput("cluster_emp_plot")
+           , plotly::plotlyOutput("cluster_emp_plot", height = "1200px")
   ),
   tabPanel("Affected Economic Areas"
            , uiOutput('affected_economic_areas')

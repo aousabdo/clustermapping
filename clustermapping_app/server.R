@@ -198,7 +198,7 @@ function(input, output, session) {
     
     # now call the build_cluster_plots function
     build_cluster_plots(region_clusters_dt = region_clusters_dt
-                        , N_top_clusters = 10
+                        , N_top_clusters = 100
                         , year_selected = input$year
                         , traded_only = FALSE
                         , start_year = 1998
@@ -609,9 +609,20 @@ function(input, output, session) {
   output$affected_counties <- renderUI({
     # get storm data
     affected <- storm_data()$affected # affected areas list
+    
+    # get the names of the affected counties
     mydata <- parse_affected_regions(affected_areas_obj = affected)$unique_counties$region_short_name_t
     
-    selectInput("affected_counties_dynamic", "Affected Counties", mydata)
+    # now for the choice to display, we need to chose the county with the most critical cluster
+    tmp <- query_critical_clusters()$critical_clusters_by_county
+    
+    # we will order this table by employment rank
+    tmp <- setorder(tmp, emp_tl_rank_i)
+    
+    selectInput(inputId = "affected_counties_dynamic"
+                ,label =  "Affected Counties"
+                , choices =  mydata
+                , selected = tmp[1, region_short_name_t])
   })
   
   #=========================================================================#
