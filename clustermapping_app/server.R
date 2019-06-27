@@ -393,18 +393,27 @@ function(input, output, session) {
   output$critical_clusters <- DT::renderDataTable(query_critical_clusters()$critical_clusters)
   
   output$critical_clusters_text <- renderText({
+    # build text to display the top critical clusters for each region type
+    
+    # get the crititcal clusters table
     tmp <- query_critical_clusters()$critical_clusters
 
+    # we will order this table by the region type and by the employment rank
     tmp <- setorderv(tmp, c("region_type_t", "emp_tl_rank_i"))
+    
+    # in some cases, a county, and MSA, and an economic area in the same region, would share the same critical cluster
+    # in this case we need to only list the unique critical cluster starting with the county, then msa, then economic area
     tmp <- unique(tmp, by = c("cluster_code_t", "cluster_name_t", "emp_tl", "emp_tl_rank_i"))
-    print(tmp[, .N])
     
     critical_clusters_out <<- copy(tmp)
     
+    # now subset the table on counties and only select related columns
     critical_counties <- tmp[region_type_t == "county", head(.SD, 1), by = region_short_name_t][, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
 
+    # defalut text to diaply when nothing interesing is to be shown
     text_output <- "No critical economic clusters"
     
+    # if there are coutnies with critical clusters then build a custom text for the critical cluster in that county
     if(critical_counties[, .N] > 0){
       critical_counties_text <- paste0(critical_counties[1, region_short_name_t]
                                        , " has a critical economic cluster \""
@@ -415,17 +424,21 @@ function(input, output, session) {
                                        , " with an employment of "
                                        , critical_counties[1, emp_tl])
       
+      # if the rank is in the top 3 then change color of font to red
       if(critical_counties[1, emp_tl_rank_i] <= 3)
         critical_counties_text <- paste0("<font color='red'> "
                                          , critical_counties_text
                                          , "</font>")
       
+      # We will only display critical cluster text if the rank is in the top 10 nationwide
       if(critical_counties[1, emp_tl_rank_i < 10])
         text_output <- paste("<ul><b><li>", critical_counties_text, "</li></b></ul>")
     }
     
+    # subset the critial cluster data.table on msas
     critical_msa <- tmp[region_type_t == "msa", head(.SD, 1), by = region_short_name_t][, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
     
+    # if there are msas with critical clusters then build a custom text for the critical cluster in that msa
     if(critical_msa[, .N] > 0){
       critical_msa_text <- paste0(critical_msa[1, region_short_name_t]
                                   , " has a critical economic cluster \""
@@ -435,17 +448,22 @@ function(input, output, session) {
                                   , " in the US"
                                   , " with an employment of "
                                   , critical_msa[1, emp_tl])
+      
+      # if the rank is in the top 3 then change color of font to red
       if(critical_msa[1, emp_tl_rank_i] <= 3)
         critical_msa_text <- paste0("<font color='red'> "
                                     , critical_msa_text
                                     , "</font>")
       
+      # We will only display critical cluster text if the rank is in the top 10 nationwide
       if(critical_msa[1, emp_tl_rank_i < 10])
         text_output <- paste(text_output, "<ul><b><li>", critical_msa_text, "</li></b></ul>")
     }    
-    
+
+    # now subset the table on economic areas and only select related columns
     critical_econ <- tmp[region_type_t == "economic", head(.SD, 1), by = region_short_name_t][, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
 
+    # if there are economic areas with critical clusters then build a custom text for the critical cluster in that economic area
     if(critical_econ[, .N] > 0){    
       critical_econ_text <- paste0(critical_econ[1, region_short_name_t]
                                    , " has a critical economic cluster \""
@@ -455,12 +473,14 @@ function(input, output, session) {
                                    , " in the US"
                                    , " with an employment of "
                                    , critical_econ[1, emp_tl])
-      
+
+      # if the rank is in the top 3 then change color of font to red
       if(critical_econ[1, emp_tl_rank_i] <= 3)
         critical_econ_text <- paste0("<font color='red'> "
                                      , critical_econ_text
                                      , "</font>")
       
+      # We will only display critical cluster text if the rank is in the top 10 nationwide
       if(critical_econ[1, emp_tl_rank_i < 10])
         text_output <- paste(text_output, "<ul><b><li>", critical_econ_text, "</li></b></ul>")
     }
@@ -475,6 +495,7 @@ function(input, output, session) {
     # paste("<ul><b><li>", critical_counties_text, "</li><br><li>", critical_msa_text, "</li><br><li>", critical_econ_text, "</li></b>")
     return(text_output)
   })
+  
   # donut chart
   output$donut_chart <- plotly::renderPlotly(cluster_plots_fun()$donut_chart)
   
