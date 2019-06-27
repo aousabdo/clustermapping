@@ -393,19 +393,56 @@ function(input, output, session) {
   output$critical_clusters <- DT::renderDataTable(query_critical_clusters()$critical_clusters)
   
   output$critical_clusters_text <- renderText({
-    tmp <<- query_critical_clusters()$critical_clusters
-    # tmp <- setorder(tmp, emp_tl_rank_i)
-    foo <- tmp[, head(.SD, 1), by = region_short_name_t][, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
-    print(foo)
+    tmp <- query_critical_clusters()$critical_clusters
+    critical_clusters_out <<- copy(tmp)
+    tmp <- setorderv(tmp, c("region_type_t", "emp_tl_rank_i"))
+    tmp <- unique(tmp, by = c("cluster_code_t", "cluster_name_t", "emp_tl", "emp_tl_rank_i"))
+    
+    critical_counties <- tmp[region_type_t == "county", head(.SD, 1), by = region_short_name_t][, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
+
     # tmp <- tmp[emp_tl_rank_i < 3, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
-    paste0(foo[1, region_short_name_t]
-           , " has a critical economic cluster: "
-           , foo[1, cluster_name_t]
-           , " which is ranked "
-           , foo[1, emp_tl_rank_i]
-           , " in the US"
-           , " with "
-           , foo[1, emp_tl], " employment")
+    critical_counties_text <- paste0(critical_counties[1, region_short_name_t]
+                                     , " has a critical economic cluster \""
+                                     , critical_counties[1, cluster_name_t]
+                                     , "\" which is ranked "
+                                     , critical_counties[1, emp_tl_rank_i]
+                                     , " in the US"
+                                     , " with an employment of "
+                                     , critical_counties[1, emp_tl])
+    
+    critical_msa <- tmp[region_type_t == "msa", head(.SD, 1), by = region_short_name_t][, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
+    
+    # tmp <- tmp[emp_tl_rank_i < 3, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
+    critical_msa_text <- paste0(critical_msa[1, region_short_name_t]
+                                     , " has a critical economic cluster \""
+                                     , critical_msa[1, cluster_name_t]
+                                     , "\" which is ranked "
+                                     , critical_msa[1, emp_tl_rank_i]
+                                     , " in the US"
+                                     , " with an employment of "
+                                     , critical_msa[1, emp_tl])
+    
+    critical_econ <- tmp[region_type_t == "economic", head(.SD, 1), by = region_short_name_t][, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
+    
+    # tmp <- tmp[emp_tl_rank_i < 3, .(region_short_name_t, cluster_name_t, emp_tl, emp_tl_rank_i)]
+    critical_econ_text <- paste0(critical_econ[1, region_short_name_t]
+                                , " has a critical economic cluster \""
+                                , critical_econ[1, cluster_name_t]
+                                , "\" which is ranked "
+                                , critical_econ[1, emp_tl_rank_i]
+                                , " in the US"
+                                , " with an employment of "
+                                , critical_econ[1, emp_tl])
+    text_output <- "No critical economic clusters"
+    if(tmp[region_type_t == "county", .N] > 0)
+      text_output <- paste("<ul><b><li>", critical_counties_text, "</li></b></ul>")
+    if(tmp[region_type_t == "msa", .N] > 0)
+      text_output <- paste(text_output, "<ul><b><li>", critical_msa_text, "</li></b></ul>")
+    if(tmp[region_type_t == "economic", .N] > 0)
+      text_output <- paste(text_output, "<ul><b><li>", critical_econ_text, "</li></b></ul>")
+    
+    # paste("<ul><b><li>", critical_counties_text, "</li><br><li>", critical_msa_text, "</li><br><li>", critical_econ_text, "</li></b>")
+    return(text_output)
   })
   # donut chart
   output$donut_chart <- plotly::renderPlotly(cluster_plots_fun()$donut_chart)

@@ -38,14 +38,14 @@ navbarPage("EconClust", id="nav",
         # , selectInput(inputId = "region_name"
         #             , label = "Select a Region"
         #             , choices = region_names)
-        , selectInput("storm_name", "Storm", c("Hurriane Irma"))
+        , selectInput("storm_name", "Storm", c("Hurricane Irma"))
         , selectInput("advisory_number", "Advisory", irma_gis_advisories_avlbl, selected = "045A")
         , checkboxInput("center_on_storm", "Center Map on Storm", value = TRUE)
         , selectInput(inputId = "year"
                     , label = "Select a Year"
                     , choices = meta_data$years_avlbl
                     , selected = max(meta_data$years_avlbl))
-        , textOutput("critical_clusters_text")
+        , htmlOutput("critical_clusters_text")
       ),
 
       tags$div(id="cite"
